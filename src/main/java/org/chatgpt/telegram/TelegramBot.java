@@ -65,7 +65,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             String messageText = message.getText();
             User user = message.getFrom();
 
-            if(!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
+            if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
                 this.messageHandlers = new LinkedHashMap<>();
                 ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
             }
@@ -140,7 +140,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleSupportCommand(long chatId) {
-        sendMessage(getTranslate(MESSAGE_DONATE_BEFORE) +  getTranslate(MESSAGE_DONATE_LINKS) +  getTranslate(MESSAGE_DONATE_AFTER), chatId);
+        sendMessage(getTranslate(MESSAGE_DONATE_BEFORE) + getTranslate(MESSAGE_DONATE_LINKS) + getTranslate(MESSAGE_DONATE_AFTER), chatId);
     }
 
     private void handleResetCommand(long chatId) {
