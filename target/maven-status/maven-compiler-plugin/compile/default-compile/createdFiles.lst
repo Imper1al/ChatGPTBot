@@ -1,0 +1,7 @@
+org\chatgpt\telegram\BotInitializer.class
+org\chatgpt\api\GPTMessage.class
+org\chatgpt\Main.class
+org\chatgpt\api\ChatGPTApi.class
+org\chatgpt\api\GPTImage.class
+org\chatgpt\telegram\BotConfig.class
+org\chatgpt\telegram\TelegramBot.class
