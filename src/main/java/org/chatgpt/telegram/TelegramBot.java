@@ -30,14 +30,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
-    List<String> bookedCommands;
     Map<String, Consumer<Long>> messageHandlers;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
         this.botConfig = botConfig;
         this.chatGPTApi = new ChatGPTApi();
-        this.bookedCommands = new ArrayList<>();
         this.messageHandlers = new LinkedHashMap<>();
         initSettingsList();
     }
@@ -68,6 +66,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             User user = message.getFrom();
 
             if(!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
+                this.messageHandlers = new LinkedHashMap<>();
                 ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
             }
 
