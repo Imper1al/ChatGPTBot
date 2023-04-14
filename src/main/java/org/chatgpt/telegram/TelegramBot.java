@@ -2,7 +2,6 @@ package org.chatgpt.telegram;
 
 import org.chatgpt.api.ChatGPTApi;
 import org.chatgpt.utils.ResourceBundleUtils;
-import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -20,7 +19,6 @@ import java.util.function.Consumer;
 import static org.chatgpt.constants.TranslationConstants.*;
 import static org.chatgpt.utils.ResourceBundleUtils.*;
 
-@Component
 public class TelegramBot extends TelegramLongPollingBot {
 
     private boolean isHandlingMessages = true;

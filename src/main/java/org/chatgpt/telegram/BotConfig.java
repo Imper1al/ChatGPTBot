@@ -1,8 +1,5 @@
 package org.chatgpt.telegram;
 
-import lombok.Data;
-
-@Data
 public class BotConfig {
 
     String botName;

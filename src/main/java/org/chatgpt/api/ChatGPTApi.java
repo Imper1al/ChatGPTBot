@@ -6,8 +6,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.HttpResponse;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.BufferedReader;
@@ -16,7 +14,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-@Service
 public class ChatGPTApi {
 
     private static final String API_KEY = "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";
