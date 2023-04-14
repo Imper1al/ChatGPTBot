@@ -3,11 +3,13 @@ package org.chatgpt;
 import org.chatgpt.telegram.BotConfig;
 import org.chatgpt.telegram.BotInitializer;
 import org.chatgpt.telegram.TelegramBot;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import static org.chatgpt.constants.GeneralConstants.*;
 import static org.chatgpt.utils.ResourceBundleUtils.*;
 
+@SpringBootApplication
 public class Main {
     public static void main(String[] args) {
         try {
