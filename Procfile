@@ -1,1 +1,1 @@
-worker: sh target/bin/ChatGPTBot-1.0-SNAPSHOT.jar
+worker: sh target/bin/ChatGPTBot
