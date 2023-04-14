@@ -21,6 +21,7 @@ public class TranslationConstants {
     public final static String MESSAGE_IMAGE_QUANTITY_WRITE = "message.image.settings.quantity.write";
     public final static String MESSAGE_IMAGE_SIZE_WRITE = "message.image.settings.size.write";
     public final static String MESSAGE_DONATE_BEFORE = "message.donate.before.link";
+    public final static String MESSAGE_DONATE_LINKS = "message.donate.links";
     public final static String MESSAGE_DONATE_AFTER = "message.donate.after.link";
     public final static String MESSAGE_ABOUT = "message.about";
     public final static String MESSAGE_REFRESH = "message.refresh";

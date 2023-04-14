@@ -140,7 +140,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleSupportCommand(long chatId) {
-        sendMessage(getTranslate(MESSAGE_DONATE_BEFORE) +  "Ссылка" +  getTranslate(MESSAGE_DONATE_AFTER), chatId);
+        sendMessage(getTranslate(MESSAGE_DONATE_BEFORE) +  getTranslate(MESSAGE_DONATE_LINKS) +  getTranslate(MESSAGE_DONATE_AFTER), chatId);
     }
 
     private void handleResetCommand(long chatId) {
