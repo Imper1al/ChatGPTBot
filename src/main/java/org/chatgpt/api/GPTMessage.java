@@ -22,10 +22,22 @@ public class GPTMessage {
 
         if(!pastContext.isEmpty()) {
             JsonArray jsonContext = new JsonArray();
-            for (String contextElement : pastContext) {
-                jsonContext.add(contextElement);
+            for (int i = 0; i < pastContext.size(); i += 2) {
+                String userContent = pastContext.get(i);
+                JsonObject userMsg = new JsonObject();
+                userMsg.addProperty("role", "user");
+                userMsg.addProperty("content", userContent);
+                jsonContext.add(userMsg);
+
+                if (i + 1 < pastContext.size()) {
+                    String assistantContent = pastContext.get(i + 1);
+                    JsonObject assistantMsg = new JsonObject();
+                    assistantMsg.addProperty("role", "assistant");
+                    assistantMsg.addProperty("content", assistantContent);
+                    jsonContext.add(assistantMsg);
+                }
             }
-            jsonObject.add("context", jsonContext);
+            jsonObject.add("messages", jsonContext);
         }
 
         System.out.println("Request: " + jsonObject);
