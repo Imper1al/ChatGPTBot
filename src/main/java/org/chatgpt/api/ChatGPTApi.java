@@ -67,8 +67,8 @@ public class ChatGPTApi {
         return result.toString();
     }
 
-    public String executeMessage(String request) {
-        StringEntity entity = new StringEntity(gptMessage.createRequest(request), StandardCharsets.UTF_8);
+    public String executeMessage(String request, List<String> pastContext) {
+        StringEntity entity = new StringEntity(gptMessage.createRequest(request, pastContext), StandardCharsets.UTF_8);
         String requestResult = createRequest(API_MESSAGE_URL, entity);
         return gptMessage.createResponse(requestResult);
     }

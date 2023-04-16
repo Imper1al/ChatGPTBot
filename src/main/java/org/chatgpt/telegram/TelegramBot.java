@@ -31,12 +31,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
     Map<String, Consumer<Long>> messageHandlers;
+    List<String> pastContext;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
         this.botConfig = botConfig;
         this.chatGPTApi = new ChatGPTApi();
         this.messageHandlers = new LinkedHashMap<>();
+        this.pastContext = new ArrayList<>();
         initSettingsList();
     }
 
@@ -185,7 +187,24 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String generateMessageAnswerFromChatGPT(String request) {
-        return chatGPTApi.executeMessage(request);
+        String response = chatGPTApi.executeMessage(request, pastContext);
+        if (tokenCounter(pastContext)) {
+            pastContext.add(request);
+            pastContext.add(response);
+        }
+        if (!tokenCounter(pastContext)) {
+            pastContext = new ArrayList<>();
+        }
+        return response;
+    }
+
+    private boolean tokenCounter(List<String> context) {
+        int tokenCount = 0;
+        for (String sentence : context) {
+            String[] tokens = sentence.split("\\s+");
+            tokenCount += tokens.length;
+        }
+        return tokenCount < 2048;
     }
 
     private List<InputFile> generateImageAnswerFromChatGPT(String request, String quantity, String size) {
