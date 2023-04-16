@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 public class ChatGPTApi {
 
@@ -67,8 +68,8 @@ public class ChatGPTApi {
         return result.toString();
     }
 
-    public String executeMessage(String request, List<String> pastContext) {
-        StringEntity entity = new StringEntity(gptMessage.createRequest(request, pastContext), StandardCharsets.UTF_8);
+    public String executeMessage(List<String> context) {
+        StringEntity entity = new StringEntity(gptMessage.createRequest(context), StandardCharsets.UTF_8);
         String requestResult = createRequest(API_MESSAGE_URL, entity);
         return gptMessage.createResponse(requestResult);
     }

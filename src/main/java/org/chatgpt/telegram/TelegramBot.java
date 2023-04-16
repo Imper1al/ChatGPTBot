@@ -31,14 +31,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
     Map<String, Consumer<Long>> messageHandlers;
-    List<String> pastContext;
+    Map<Long, List<String>> context;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
         this.botConfig = botConfig;
         this.chatGPTApi = new ChatGPTApi();
         this.messageHandlers = new LinkedHashMap<>();
-        this.pastContext = new ArrayList<>();
+        this.context = new HashMap<>();
         initSettingsList();
     }
 
@@ -134,7 +134,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleMessagesRequest(long chatId, String messageText) {
         resetValues();
         sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId);
-        String generateMessageAnswerFromChatGPT = generateMessageAnswerFromChatGPT(messageText);
+        String generateMessageAnswerFromChatGPT = generateMessageAnswerFromChatGPT(messageText, chatId);
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
         if (errorHandler(generateMessageAnswerFromChatGPT, chatId)) {
             sendMessage(generateMessageAnswerFromChatGPT, chatId);
@@ -186,15 +186,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         return true;
     }
 
-    private String generateMessageAnswerFromChatGPT(String request) {
-        pastContext.add(request);
-        String response = chatGPTApi.executeMessage(request, pastContext);
-        if (tokenCounter(pastContext)) {
-            pastContext.add(response);
+    private String generateMessageAnswerFromChatGPT(String request, long chatId) {
+        List<String> currentContext = context.get(chatId);
+        if (currentContext == null || !tokenCounter(currentContext)) {
+            currentContext = new ArrayList<>();
         }
-        if (!tokenCounter(pastContext)) {
-            pastContext = new ArrayList<>();
+        currentContext.add(request);
+        String response = chatGPTApi.executeMessage(currentContext);
+        if (tokenCounter(currentContext)) {
+            currentContext.add(response);
         }
+        context.put(chatId, currentContext);
         return response;
     }
 
