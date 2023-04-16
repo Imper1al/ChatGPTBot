@@ -27,6 +27,8 @@ public class GPTMessage {
             }
             jsonObject.add("context", jsonContext);
         }
+
+        System.out.println("Request: " + jsonObject);
         return jsonObject.toString();
     }
 
@@ -38,6 +40,7 @@ public class GPTMessage {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         JsonObject message = jsonObject.getAsJsonObject("message");
         JsonElement content = message.get("content");
+        System.out.println("Response" + response);
         return content.getAsString();
     }
 }
