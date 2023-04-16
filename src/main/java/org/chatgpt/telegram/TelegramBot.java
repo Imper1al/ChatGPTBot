@@ -188,6 +188,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<String> currentContext = context.get(chatId);
         if (currentContext == null || !tokenCounter(currentContext)) {
             currentContext = new ArrayList<>();
+            context.put(chatId, currentContext);
         }
         currentContext.add(request);
         String response = chatGPTApi.executeMessage(currentContext);
