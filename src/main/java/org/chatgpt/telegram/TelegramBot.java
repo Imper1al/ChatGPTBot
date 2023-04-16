@@ -136,8 +136,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId);
         String generateMessageAnswerFromChatGPT = generateMessageAnswerFromChatGPT(messageText, chatId);
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
-        if (errorHandler(generateMessageAnswerFromChatGPT, chatId)) {
-            sendMessage(generateMessageAnswerFromChatGPT, chatId);
+        if (errorHandler(generateMessageAnswerFromChatGPT)) {
+            sendMessage(getTranslate(ERROR_TIMEOUT), chatId);
         }
     }
 
@@ -178,12 +178,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         handleSizeSelection(chatId);
     }
 
-    private boolean errorHandler(String response, long chatId) {
-        if (response.equals("Timeout waiting for connection from pool") || response.equals("Read timed out")) {
-            sendMessage(getTranslate(ERROR_TIMEOUT), chatId);
-            return false;
-        }
-        return true;
+    private boolean errorHandler(String response) {
+        return response.equals("Timeout waiting for connection from pool") || response.equals("Read timed out");
     }
 
     private String generateMessageAnswerFromChatGPT(String request, long chatId) {
@@ -193,6 +189,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         currentContext.add(request);
         String response = chatGPTApi.executeMessage(currentContext);
+        if (errorHandler(response)) {
+            currentContext.add(ERROR_TIMEOUT);
+        }
         if (tokenCounter(currentContext)) {
             currentContext.add(response);
         }

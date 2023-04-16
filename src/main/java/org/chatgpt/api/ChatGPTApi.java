@@ -39,7 +39,7 @@ public class ChatGPTApi {
         post.setHeader("Accept", "application/json");
         post.setHeader("Content-Type", "application/json; utf-8");
 
-        int timeout = 60;
+        int timeout = 120;
         RequestConfig config = RequestConfig.custom()
                 .setConnectTimeout(timeout * 1000)
                 .setConnectionRequestTimeout(timeout * 1000)
