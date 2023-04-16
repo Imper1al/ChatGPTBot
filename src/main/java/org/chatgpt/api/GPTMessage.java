@@ -13,13 +13,6 @@ public class GPTMessage {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("model", "gpt-3.5-turbo");
 
-        JsonArray jsonArray = new JsonArray();
-        JsonObject role = new JsonObject();
-        role.addProperty("role", "user");
-        role.addProperty("content", request);
-        jsonArray.add(role);
-        jsonObject.add("messages", jsonArray);
-
         if(!pastContext.isEmpty()) {
             JsonArray jsonContext = new JsonArray();
             for (int i = 0; i < pastContext.size(); i += 2) {

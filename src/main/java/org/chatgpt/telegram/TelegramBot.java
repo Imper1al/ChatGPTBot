@@ -187,9 +187,9 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String generateMessageAnswerFromChatGPT(String request) {
+        pastContext.add(request);
         String response = chatGPTApi.executeMessage(request, pastContext);
         if (tokenCounter(pastContext)) {
-            pastContext.add(request);
             pastContext.add(response);
         }
         if (!tokenCounter(pastContext)) {
