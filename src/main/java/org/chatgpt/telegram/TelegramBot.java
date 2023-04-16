@@ -138,6 +138,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
         if (errorHandler(generateMessageAnswerFromChatGPT)) {
             sendMessage(getTranslate(ERROR_TIMEOUT), chatId);
+        } else {
+            sendMessage(generateMessageAnswerFromChatGPT, chatId);
         }
     }
 
