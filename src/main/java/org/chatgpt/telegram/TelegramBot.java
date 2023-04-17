@@ -211,6 +211,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             String[] tokens = sentence.split("\\s+");
             tokenCount += tokens.length;
         }
+        System.out.println("Current token count: " + tokenCount);
         return tokenCount < 2048;
     }
 
