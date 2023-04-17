@@ -76,7 +76,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     + ": " + messageText);
 
             if (messageText != null) {
-                messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(user.getLanguageCode(), chatId));
+                messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
                 messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
                 messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
                 messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
@@ -148,18 +148,21 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleResetCommand(long chatId) {
-        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
         resetValues();
         if (isHandlingImages) {
             sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
         }
+        if (isHandlingMessages) {
+            context.put(chatId, new ArrayList<>());
+        }
+        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
     }
 
     private void handleAboutCommand(long chatId) {
         sendMessage(getTranslate(MESSAGE_ABOUT), chatId);
     }
 
-    private void handleStartCommand(String languageCode, long chatId) {
+    private void handleStartCommand(long chatId) {
         sendMessage(getTranslate(MESSAGE_START), chatId);
         this.isHandlingImages = false;
         this.isHandlingMessages = true;
