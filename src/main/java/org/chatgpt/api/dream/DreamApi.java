@@ -2,6 +2,8 @@ package org.chatgpt.api.dream;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -17,11 +19,13 @@ import java.util.Map;
 
 public class DreamApi {
     private static final String API_KEY = "vDbdhIrB85TvQ8lCIrBi49nouJ9i6NBt";
+    private static final String URL = "https://api.luan.tools/api/tasks/";
 
     private final DreamImage dreamImage;
     private final DreamStyles dreamStyles;
     private HttpClient client;
     private HttpPut put;
+    private HttpPost post;
 
     public DreamApi() {
         this.dreamImage = new DreamImage();
@@ -31,19 +35,22 @@ public class DreamApi {
     private void createConnection() {
         this.client = HttpClientBuilder.create().build();
         this.put = new HttpPut();
+        this.post = new HttpPost();
 
         put.setHeader("Authorization", "Bearer " + API_KEY);
         put.setHeader("Accept", "application/json");
         put.setHeader("Content-Type", "application/json; utf-8");
+
+        post.setHeader("Authorization", "Bearer " + API_KEY);
+        post.setHeader("Accept", "application/json");
+        post.setHeader("Content-Type", "application/json; utf-8");
     }
 
-    private String createRequest(String url, StringEntity entity) {
+    private String createRequest(HttpEntityEnclosingRequestBase httpMethod) {
         createConnection();
         StringBuilder result = new StringBuilder();
         try {
-            put.setURI(URI.create(url));
-            put.setEntity(entity);
-            HttpResponse response = client.execute(put);
+            HttpResponse response = client.execute(httpMethod);
             BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), StandardCharsets.UTF_8));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -59,41 +66,30 @@ public class DreamApi {
 
     public InputFile generateImages(String styleId, String description) {
         StringEntity entity = new StringEntity(dreamImage.createRequest(styleId, description), StandardCharsets.UTF_8);
-        String requestResult = createRequest("https://api.luan.tools/api/tasks/" + createTaskId(), entity);
+        put.setURI(URI.create(URL + createTaskId()));
+        put.setEntity(entity);
+        String requestResult = createRequest(put);
         return dreamImage.createResponse(requestResult);
     }
 
     private String createTaskId() {
         String result = "";
         try {
-            URL url = new URL("https://api.luan.tools/api/tasks/");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "Bearer " + API_KEY);
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setRequestProperty("Accept", "application/json");
-
-            con.setDoOutput(true);
-
             String jsonInputString = "{ \"use_target_image\": true }";
+            StringEntity entity = new StringEntity(jsonInputString, StandardCharsets.UTF_8);
+            post.setURI(URI.create(URL));
+            post.setEntity(entity);
+            String requestResult = createRequest(post);
 
-            try (var os = con.getOutputStream()) {
-                byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
+            System.out.println("Task Result: " + requestResult);
 
-            StringBuilder response = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
-                String responseLine;
-                while ((responseLine = br.readLine()) != null) {
-                    response.append(responseLine.trim());
-                }
-            }
+            String targetImageUrl = requestResult.split("\"target_image_url\":")[1];
 
-            String targetImageUrl = response.toString().split("\"target_image_url\":")[1];
+            System.out.println("Task URL: " + targetImageUrl);
 
             result = targetImageUrl.split("/")[2];
+
+            System.out.println("Task ID: " + result);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
