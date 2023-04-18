@@ -47,7 +47,6 @@ public class DreamApi {
     }
 
     private String createRequest(HttpEntityEnclosingRequestBase httpMethod) {
-        createConnection();
         StringBuilder result = new StringBuilder();
         try {
             HttpResponse response = client.execute(httpMethod);
@@ -65,6 +64,7 @@ public class DreamApi {
     }
 
     public InputFile generateImages(String styleId, String description) {
+        createConnection();
         StringEntity entity = new StringEntity(dreamImage.createRequest(styleId, description), StandardCharsets.UTF_8);
         put.setURI(URI.create(URL + createTaskId()));
         put.setEntity(entity);
