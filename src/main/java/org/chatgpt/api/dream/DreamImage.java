@@ -29,8 +29,8 @@ public class DreamImage {
         JsonObject object = jsonResult.fromJson(response, JsonObject.class);
 
         System.out.println("Response: " + object.toString());
-
-        JsonElement url = object.get("url");
+        JsonObject result = object.getAsJsonObject("result");
+        JsonElement url = result.get("final");
         return saveImage(url.getAsString());
     }
 

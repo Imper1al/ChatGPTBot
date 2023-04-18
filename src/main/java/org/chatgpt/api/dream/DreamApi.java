@@ -107,7 +107,7 @@ public class DreamApi {
 
     private void createTaskId() {
         try {
-            String jsonInputString = "{ \"use_target_image\": true }";
+            String jsonInputString = "{ \"use_target_image\": false }";
             StringEntity entity = new StringEntity(jsonInputString, StandardCharsets.UTF_8);
             post.setURI(URI.create(URL));
             post.setEntity(entity);
