@@ -150,32 +150,44 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleDreamImages(String query, long chatId) {
-        if (currentStyle == null) {
-            sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
-            sendMessage(getOptions(dreamApi.getStyles()), "Выберите интерисуемый вас стиль картинки: ", chatId);
-        }
-        if (styles.contains(query)) {
-            currentStyle = query;
-        }
-        if (currentStyle != null) {
-            sendMessage("Вы выбрали стиль картинки: " + currentStyle, chatId);
-            sendMessage("Опишите какую картинку вы бы хотели видеть: ", chatId);
+        if (isHandlingDreamImages) {
+            if (styles.contains(query)) {
+                currentStyle = query;
+            }
+            if (currentStyle == null) {
+                sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
+                sendMessage(getOptions(dreamApi.getStyles()), "Выберите интерисуемый вас стиль картинки: ", chatId);
+            }
+            if (currentStyle != null) {
+                sendMessage("Вы выбрали стиль картинки: " + currentStyle, chatId);
+                sendMessage("Опишите какую картинку вы бы хотели видеть: ", chatId);
+            }
         }
     }
 
     private void handleGPTImages(String query, long chatId) {
-        if (quantity == null && size == null && isHandlingImages) {
-            sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
-        }
-        if (quantity == null && quantityList.contains(query)) {
-            sendMessage(getTranslate(MESSAGE_IMAGE_SIZE_RESULT) + query, chatId);
-            sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
-        } else if (size == null && sizeList.contains(query)) {
-            if (quantity != null) {
+        if (isHandlingGPTImages) {
+            if (quantityList.contains(query)) {
+                quantity = query;
+                sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
+            }
+            if (quantityList.contains(query)) {
+                quantity = query;
                 sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
-            } else {
+            }
+            if (quantity == null && size == null) {
                 sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
             }
+//            if (quantity == null && quantityList.contains(query)) {
+//                sendMessage(getTranslate(MESSAGE_IMAGE_SIZE_RESULT) + query, chatId);
+//                sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
+//            } else if (size == null && sizeList.contains(query)) {
+//                if (quantity != null) {
+//                    sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+//                } else {
+//                    sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
+//                }
+//            }
         }
     }
 
