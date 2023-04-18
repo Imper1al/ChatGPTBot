@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.chatgpt.constants.Constants;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.BufferedReader;
@@ -32,6 +33,7 @@ public class DreamApi {
     private HttpPost post;
     private HttpGet get;
     private String taskId;
+    private String resultStatus;
 
     public DreamApi() {
         this.dreamImage = new DreamImage();
@@ -75,6 +77,7 @@ public class DreamApi {
     }
 
     public InputFile generateImages(String styleId, String width, String height, String description) {
+        resultStatus = null;
         createConnection();
         createTaskId();
         StringEntity entity = new StringEntity(dreamImage.createRequest(styleId, width, height, description), StandardCharsets.UTF_8);
@@ -86,14 +89,15 @@ public class DreamApi {
             JsonObject result = checkGenerator();
             System.out.println("Result in cycle: " + result);
             JsonElement status = result.get("state");
-            if (status.getAsString().equals("pending")) {
+            if (status.getAsString().equals(Constants.DREAM_IMAGE_STATUS_PENDING)) {
                 System.out.println("Status: pending");
             }
-            if (status.getAsString().equals("completed")) {
+            if (status.getAsString().equals(Constants.DREAM_IMAGE_STATUS_COMPLETED)) {
                 finalResult = result.get("result").getAsString();
                 break;
             }
-            if (status.getAsString().equals("failed")) {
+            if (status.getAsString().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
+                resultStatus = "failed";
                 System.out.println("Status: failed");
                 break;
             }
@@ -156,5 +160,9 @@ public class DreamApi {
 
     public Map<String, String> getStyles() {
         return dreamStyles.getStyles();
+    }
+
+    public String getResultStatus() {
+        return resultStatus;
     }
 }

@@ -2,6 +2,7 @@ package org.chatgpt.telegram;
 
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
+import org.chatgpt.constants.Constants;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -136,6 +137,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (isDescription) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                 sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
+                if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
+                    sendMessage(getTranslate(ERROR_GENERATION), chatId);
+                }
                 resetValues();
                 isHandlingMessages = true;
                 isHandlingImages = false;
@@ -157,10 +161,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
                         isDescription = true;
                     } else {
-                        sendMessage("Не правильно введена высота!", chatId);
+                        sendMessage(getTranslate(ERROR_HEIGHT), chatId);
                     }
                 } catch (NumberFormatException e) {
-                    sendMessage("Не правильно введена высота!", chatId);
+                    sendMessage(getTranslate(ERROR_HEIGHT), chatId);
                 }
             }
             if (isWidth) {
@@ -170,12 +174,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         width = messageText;
                         isWidth = false;
                         isHeight = true;
-                        sendMessage("Введите высоту: (max 8000)", chatId);
+                        sendMessage(getTranslate(MESSAGE_IMAGE_HEIGHT_WRITE), chatId);
                     } else {
-                        sendMessage("Не правильно введена ширина!", chatId);
+                        sendMessage(getTranslate(ERROR_WIDTH), chatId);
                     }
                 } catch (NumberFormatException e) {
-                    sendMessage("Не правильно введена ширина!", chatId);
+                    sendMessage(getTranslate(ERROR_WIDTH), chatId);
                 }
             }
         }
@@ -191,7 +195,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if (currentStyle != null && width == null) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
-                sendMessage("Введите ширину: (max 8000)", chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_WIDTH_WRITE), chatId);
                 isWidth = true;
             }
         }
