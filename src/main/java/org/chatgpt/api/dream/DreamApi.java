@@ -4,6 +4,7 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.net.HttpURLConnection;
 import java.util.List;
+import java.util.Map;
 
 public class DreamApi {
     private static final String API_KEY = "vDbdhIrB85TvQ8lCIrBi49nouJ9i6NBt";
@@ -21,7 +22,7 @@ public class DreamApi {
         return dreamImage.getResponse(httpURLConnection);
     }
 
-    public List<String> getStyles() {
+    public Map<String, String> getStyles() {
         return dreamStyles.getStyles();
     }
 }

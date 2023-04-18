@@ -12,8 +12,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class DreamStyles {
 
@@ -21,7 +20,7 @@ public class DreamStyles {
     private HttpClient client;
     private HttpGet get;
 
-    public List<String> getStyles() {
+    public Map<String, String> getStyles() {
         createConnection();
         String request = createRequest();
         return createResponse(request);
@@ -53,15 +52,16 @@ public class DreamStyles {
         return result.toString();
     }
 
-    private List<String> createResponse(String response) {
+    private Map<String, String> createResponse(String response) {
         JsonElement element = JsonParser.parseString(response);
         JsonArray jsonArray = element.getAsJsonArray();
 
-        List<String> styles = new ArrayList<>();
+        Map<String, String> styles = new LinkedHashMap<>();
 
         for (JsonElement jsonElement : jsonArray) {
             String name = jsonElement.getAsJsonObject().get("name").getAsString();
-            styles.add(name);
+            String id = jsonElement.getAsJsonObject().get("id").getAsString();
+            styles.put(name, id);
         }
         return styles;
     }

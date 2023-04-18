@@ -18,7 +18,7 @@ public class DreamImage {
 
     private String createRequest(String styleId, String description) {
         JSONObject inputSpec = new JSONObject();
-        inputSpec.put("style", styleId);
+        inputSpec.put("style", Integer.valueOf(styleId));
         inputSpec.put("prompt", description);
 
         JSONObject json = new JSONObject();
@@ -26,7 +26,7 @@ public class DreamImage {
         return json.toString();
     }
 
-    public HttpURLConnection apiRequest(String styleId, String description) {
+    public HttpURLConnection apiRequest(String styleName, String description) {
         HttpURLConnection con = null;
         try {
             URL url = new URL("https://api.luan.tools/api/tasks/" + createTaskId());
@@ -36,7 +36,7 @@ public class DreamImage {
             con.setRequestProperty("Authorization", "Bearer " + apiKey);
             con.setRequestProperty("Content-Type", "application/json");
             OutputStream os = con.getOutputStream();
-            String request = createRequest(styleId, description);
+            String request = createRequest(styleName, description);
             os.write(request.getBytes());
             os.flush();
         } catch (IOException e) {

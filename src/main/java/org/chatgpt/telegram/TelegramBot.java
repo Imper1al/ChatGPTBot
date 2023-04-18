@@ -2,7 +2,6 @@ package org.chatgpt.telegram;
 
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
-import org.chatgpt.constants.Constants;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -38,7 +37,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     Map<String, Consumer<Long>> messageHandlers;
     Map<Long, List<String>> context;
     private final DreamApi dreamApi;
-    List<String> styles;
+    Map<String, String> styles;
     private String currentStyle;
 
     public TelegramBot(BotConfig botConfig) {
@@ -116,7 +115,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<String> strategy = new ArrayList<>();
         strategy.add(GPT_IMAGE_STRATEGY);
         strategy.add(DREAM_IMAGE_STRATEGY);
-        sendMessage(getOptions(strategy), MESSAGE_IMAGE_SELECT_STRATEGY, chatId);
+        sendMessage(getOptions(strategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
     }
 
     private void handleImagesRequest(long chatId, String messageText) {
@@ -130,7 +129,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (currentStyle != null) {
             sendMessage(getTranslate(MESSAGE_IMAGE_WRITE), chatId);
-            sendImage(dreamApi.generateImages(currentStyle, messageText), chatId);
+            sendImage(dreamApi.generateImages(styles.get(currentStyle), messageText), chatId);
             resetValues();
             isHandlingMessages = true;
             isHandlingImages = false;
@@ -140,22 +139,21 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleDreamImages(String query, long chatId) {
         if (isHandlingDreamImages && !quantityList.contains(query) && !sizeList.contains(query)) {
-            if (styles.contains(query)) {
+            if (styles.containsKey(query)) {
                 currentStyle = query;
             }
             if (currentStyle == null) {
-                sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
-                sendMessage(getStyleOptions(dreamApi.getStyles()), MESSAGE_IMAGE_STYLE_WRITE, chatId);
+                sendMessage(getStyleOptions(dreamApi.getStyles().keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
             }
             if (currentStyle != null) {
-                sendMessage(MESSAGE_IMAGE_STYLE_RESULT + currentStyle, chatId);
-                sendMessage(MESSAGE_IMAGE_DESCRIPTION, chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
             }
         }
     }
 
     private void handleGPTImages(String query, long chatId) {
-        if (isHandlingGPTImages && !styles.contains(query)) {
+        if (isHandlingGPTImages && !styles.containsKey(query)) {
             if (quantityList.contains(query)) {
                 quantity = query;
                 sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
@@ -349,7 +347,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return markup;
     }
 
-    private InlineKeyboardMarkup getStyleOptions(List<String> values) {
+    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         int counter = 0;
