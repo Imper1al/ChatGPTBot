@@ -132,7 +132,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHandlingImages = false;
             isHandlingGPTImages = false;
         }
-        if (currentStyle != null) {
+        if (currentStyle != null && width != null && height != null) {
             if (isDescription) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                 sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
@@ -141,13 +141,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 isHandlingImages = false;
                 isHandlingDreamImages = false;
                 isDescription = false;
-            }
-            if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
-                isDescription = true;
-            }
-            if (isHeight) {
-                sendMessage("Введите высоту: (max 8000)", chatId);
             }
             heightAndWeightCheck(messageText, chatId);
         }
@@ -161,6 +154,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (result >= 1 && result <= 8000) {
                         height = messageText;
                         isHeight = false;
+                        sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                        isDescription = true;
                     } else {
                         sendMessage("Не правильно введена высота!", chatId);
                     }
@@ -175,11 +170,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         width = messageText;
                         isWidth = false;
                         isHeight = true;
+                        sendMessage("Введите высоту: (max 8000)", chatId);
                     } else {
                         sendMessage("Не правильно введена ширина!", chatId);
                     }
                 } catch (NumberFormatException e) {
-                    sendMessage("Не правильно введена высота!", chatId);
+                    sendMessage("Не правильно введена ширина!", chatId);
                 }
             }
         }
