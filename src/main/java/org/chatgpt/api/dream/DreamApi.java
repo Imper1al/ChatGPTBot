@@ -80,7 +80,8 @@ public class DreamApi {
         StringEntity entity = new StringEntity(dreamImage.createRequest(styleId, description), StandardCharsets.UTF_8);
         put.setURI(URI.create(URL + taskId));
         put.setEntity(entity);
-        String requestResult = createRequest(put);
+        createRequest(put);
+        String finalResult = "";
         while (true) {
             JsonObject result = checkGenerator();
             System.out.println("Result in cycle: " + result);
@@ -89,7 +90,7 @@ public class DreamApi {
                 System.out.println("Status: pending");
             }
             if (status.getAsString().equals("completed")) {
-                System.out.println("Status: completed");
+                finalResult = result.get("result").getAsString();
                 break;
             }
             if (status.getAsString().equals("failed")) {
@@ -102,7 +103,7 @@ public class DreamApi {
                 System.out.println(e.getMessage());
             }
         }
-        return dreamImage.createResponse(requestResult);
+        return dreamImage.saveImage(finalResult);
     }
 
     private void createTaskId() {

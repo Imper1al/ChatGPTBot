@@ -24,17 +24,7 @@ public class DreamImage {
         return json.toString();
     }
 
-    public InputFile createResponse(String response) {
-        Gson jsonResult = new Gson().newBuilder().setPrettyPrinting().create();
-        JsonObject object = jsonResult.fromJson(response, JsonObject.class);
-
-        System.out.println("Response: " + object.toString());
-        JsonObject result = object.getAsJsonObject("result");
-        JsonElement url = result.get("final");
-        return saveImage(url.getAsString());
-    }
-
-    private InputFile saveImage(String url) {
+    public InputFile saveImage(String url) {
         InputFile image = null;
         try {
             FileUtils.copyURLToFile(new URL(url), new File("image.png"));
