@@ -19,12 +19,17 @@ public class DreamImage {
 
         JSONObject json = new JSONObject();
         json.put("input_spec", inputSpec);
+
+        System.out.println("Request: " + inputSpec);
         return json.toString();
     }
 
     public InputFile createResponse(String response) {
         Gson jsonResult = new Gson().newBuilder().setPrettyPrinting().create();
         JsonObject object = jsonResult.fromJson(response, JsonObject.class);
+
+        System.out.println("Response: " + object.toString());
+
         JsonElement url = object.get("url");
         return saveImage(url.getAsString());
     }

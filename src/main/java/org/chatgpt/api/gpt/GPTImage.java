@@ -19,6 +19,8 @@ public class GPTImage {
         jsonObject.addProperty("prompt", request);
         jsonObject.addProperty("n", quantity);
         jsonObject.addProperty("size", size);
+
+        System.out.println("Request: " + jsonObject);
         return jsonObject.toString();
     }
 
@@ -26,6 +28,9 @@ public class GPTImage {
         List<InputFile> images = new ArrayList<>();
         Gson jsonResult = new Gson().newBuilder().setPrettyPrinting().create();
         JsonObject object = jsonResult.fromJson(response, JsonObject.class);
+
+        System.out.println("Response: " + object.toString());
+
         JsonArray jsonArray = object.getAsJsonArray("data");
         if(jsonArray.size() > 0) {
             int imageCounter = 1;
