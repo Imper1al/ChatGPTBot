@@ -145,6 +145,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 isHandlingImages = false;
                 isHandlingDreamImages = false;
                 isDescription = false;
+                isHeight = false;
+                isWidth = false;
             }
             heightAndWeightCheck(messageText, chatId);
         }
