@@ -132,6 +132,29 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHandlingGPTImages = false;
         }
         if (currentStyle != null) {
+            heightAndWeightCheck(messageText, chatId);
+            if (width != null && height == null) {
+                sendMessage("Введите высоту: (max 8000)", chatId);
+                isWidth = false;
+                isHeight = true;
+            }
+            if (currentStyle != null && width != null && height != null) {
+                isHeight = false;
+                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+            }
+            if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
+                sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
+                sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
+                resetValues();
+                isHandlingMessages = true;
+                isHandlingImages = false;
+                isHandlingDreamImages = false;
+            }
+        }
+    }
+
+    private void heightAndWeightCheck(String messageText, long chatId) {
+        if (currentStyle != null) {
             if (isWidth) {
                 int result = Integer.parseInt(messageText);
                 if (result >= 1 && result <= 8000) {
@@ -150,23 +173,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } else {
                     sendMessage("Не правильно введена высота!", chatId);
                 }
-            }
-            if (currentStyle != null && width != null && height == null) {
-                sendMessage("Введите высоту: (max 8000)", chatId);
-                isWidth = false;
-                isHeight = true;
-            }
-            if (currentStyle != null && width != null && height != null) {
-                isHeight = false;
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
-            }
-            if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
-                sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
-                sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
-                resetValues();
-                isHandlingMessages = true;
-                isHandlingImages = false;
-                isHandlingDreamImages = false;
             }
         }
     }
@@ -412,5 +418,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.quantity = null;
         this.size = null;
         this.currentStyle = null;
+        this.width = null;
+        this.height = null;
     }
 }
