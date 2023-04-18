@@ -132,7 +132,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHandlingImages = false;
             isHandlingGPTImages = false;
         }
-        if (currentStyle != null && width != null && height != null) {
+        if (currentStyle != null) {
             if (isDescription) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                 sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
