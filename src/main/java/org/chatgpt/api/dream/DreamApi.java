@@ -74,10 +74,10 @@ public class DreamApi {
         return result.toString();
     }
 
-    public InputFile generateImages(String styleId, String description) {
+    public InputFile generateImages(String styleId, String width, String height, String description) {
         createConnection();
         createTaskId();
-        StringEntity entity = new StringEntity(dreamImage.createRequest(styleId, description), StandardCharsets.UTF_8);
+        StringEntity entity = new StringEntity(dreamImage.createRequest(styleId, width, height, description), StandardCharsets.UTF_8);
         put.setURI(URI.create(URL + taskId));
         put.setEntity(entity);
         createRequest(put);

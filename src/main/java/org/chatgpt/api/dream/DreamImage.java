@@ -12,10 +12,12 @@ import java.net.URL;
 
 public class DreamImage {
 
-    public String createRequest(String styleId, String description) {
+    public String createRequest(String styleId, String width, String height, String description) {
         JSONObject inputSpec = new JSONObject();
         inputSpec.put("style", Integer.valueOf(styleId));
         inputSpec.put("prompt", description);
+        inputSpec.put("width", width);
+        inputSpec.put("height", height);
 
         JSONObject json = new JSONObject();
         json.put("input_spec", inputSpec);

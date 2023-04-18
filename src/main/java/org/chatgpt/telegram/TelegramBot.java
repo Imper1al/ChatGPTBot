@@ -27,6 +27,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isHandlingImages = false;
     private boolean isHandlingDreamImages = false;
     private boolean isHandlingGPTImages = false;
+    private boolean isWidth = false;
+    private boolean isHeight = false;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -39,6 +41,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final DreamApi dreamApi;
     Map<String, String> styles;
     private String currentStyle;
+    private String width;
+    private String height;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
@@ -128,12 +132,42 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHandlingGPTImages = false;
         }
         if (currentStyle != null) {
-            sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
-            sendImage(dreamApi.generateImages(styles.get(currentStyle), messageText), chatId);
-            resetValues();
-            isHandlingMessages = true;
-            isHandlingImages = false;
-            isHandlingDreamImages = false;
+            if (isWidth) {
+                int result = Integer.parseInt(messageText);
+                if (result >= 1 && result <= 8000) {
+                    width = messageText;
+                    isWidth = false;
+                    isHeight = true;
+                } else {
+                    sendMessage("Не правильно введена ширина!", chatId);
+                }
+            }
+            if (isHeight) {
+                int result = Integer.parseInt(messageText);
+                if (result >= 1 && result <= 8000) {
+                    height = messageText;
+                    isHeight = false;
+                } else {
+                    sendMessage("Не правильно введена высота!", chatId);
+                }
+            }
+            if (currentStyle != null && width != null && height == null) {
+                sendMessage("Введите высоту: (max 8000)", chatId);
+                isWidth = false;
+                isHeight = true;
+            }
+            if (currentStyle != null && width != null && height != null) {
+                isHeight = false;
+                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+            }
+            if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
+                sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
+                sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
+                resetValues();
+                isHandlingMessages = true;
+                isHandlingImages = false;
+                isHandlingDreamImages = false;
+            }
         }
     }
 
@@ -145,9 +179,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (currentStyle == null) {
                 sendMessage(getStyleOptions(dreamApi.getStyles().keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
             }
-            if (currentStyle != null) {
+            if (currentStyle != null && width == null) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                sendMessage("Введите ширину: (max 8000)", chatId);
+                isWidth = true;
             }
         }
     }
