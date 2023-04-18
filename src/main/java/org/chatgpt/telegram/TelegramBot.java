@@ -29,6 +29,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isHandlingGPTImages = false;
     private boolean isWidth = false;
     private boolean isHeight = false;
+    private boolean isDescription = false;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -133,22 +134,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (currentStyle != null) {
             heightAndWeightCheck(messageText, chatId);
-            if (width != null && height == null) {
+            if (isHeight) {
                 sendMessage("Введите высоту: (max 8000)", chatId);
-                isWidth = false;
-                isHeight = true;
-            }
-            if (currentStyle != null && width != null && height != null) {
-                isHeight = false;
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
             }
             if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
+                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                isDescription = true;
+            }
+            if (isDescription) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                 sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
                 resetValues();
                 isHandlingMessages = true;
                 isHandlingImages = false;
                 isHandlingDreamImages = false;
+                isDescription = false;
             }
         }
     }
@@ -228,7 +228,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleResetCommand(long chatId) {
         resetValues();
         if (isHandlingImages) {
-            sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
+            handleImagesMode(chatId);
         }
         if (isHandlingMessages) {
             context.put(chatId, new ArrayList<>());
