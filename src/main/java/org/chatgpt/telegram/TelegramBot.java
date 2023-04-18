@@ -133,14 +133,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHandlingGPTImages = false;
         }
         if (currentStyle != null) {
-            heightAndWeightCheck(messageText, chatId);
-            if (isHeight) {
-                sendMessage("Введите высоту: (max 8000)", chatId);
-            }
-            if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
-                isDescription = true;
-            }
             if (isDescription) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                 sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
@@ -150,28 +142,44 @@ public class TelegramBot extends TelegramLongPollingBot {
                 isHandlingDreamImages = false;
                 isDescription = false;
             }
+            if (currentStyle != null && width != null && height != null && !isWidth && !isHeight) {
+                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                isDescription = true;
+            }
+            if (isHeight) {
+                sendMessage("Введите высоту: (max 8000)", chatId);
+            }
+            heightAndWeightCheck(messageText, chatId);
         }
     }
 
     private void heightAndWeightCheck(String messageText, long chatId) {
         if (currentStyle != null) {
             if (isHeight) {
-                int result = Integer.parseInt(messageText);
-                if (result >= 1 && result <= 8000) {
-                    height = messageText;
-                    isHeight = false;
-                } else {
+                try {
+                    int result = Integer.parseInt(messageText);
+                    if (result >= 1 && result <= 8000) {
+                        height = messageText;
+                        isHeight = false;
+                    } else {
+                        sendMessage("Не правильно введена высота!", chatId);
+                    }
+                } catch (NumberFormatException e) {
                     sendMessage("Не правильно введена высота!", chatId);
                 }
             }
             if (isWidth) {
-                int result = Integer.parseInt(messageText);
-                if (result >= 1 && result <= 8000) {
-                    width = messageText;
-                    isWidth = false;
-                    isHeight = true;
-                } else {
-                    sendMessage("Не правильно введена ширина!", chatId);
+                try {
+                    int result = Integer.parseInt(messageText);
+                    if (result >= 1 && result <= 8000) {
+                        width = messageText;
+                        isWidth = false;
+                        isHeight = true;
+                    } else {
+                        sendMessage("Не правильно введена ширина!", chatId);
+                    }
+                } catch (NumberFormatException e) {
+                    sendMessage("Не правильно введена высота!", chatId);
                 }
             }
         }
