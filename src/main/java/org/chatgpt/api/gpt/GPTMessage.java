@@ -1,4 +1,4 @@
-package org.chatgpt.api;
+package org.chatgpt.api.gpt;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

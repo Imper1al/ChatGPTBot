@@ -1,4 +1,4 @@
-package org.chatgpt.api;
+package org.chatgpt.api.gpt;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 public class ChatGPTApi {
 
