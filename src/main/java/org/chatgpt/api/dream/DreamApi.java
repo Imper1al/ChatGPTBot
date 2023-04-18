@@ -1,5 +1,8 @@
 package org.chatgpt.api.dream;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -83,12 +86,20 @@ public class DreamApi {
 
             System.out.println("Task Result: " + requestResult);
 
-            String targetImageUrl = requestResult.split("\"target_image_url\":")[1];
+//            String targetImageUrl = requestResult.split("\"target_image_url\":")[1];
 
-            System.out.println("Task URL: " + targetImageUrl);
+//            System.out.println("Task URL: " + targetImageUrl);
 
-            result = targetImageUrl.split("/")[2];
+//            result = targetImageUrl.split("/")[2];
 
+            Gson jsonResult = new Gson().newBuilder().setPrettyPrinting().create();
+            JsonObject object = jsonResult.fromJson(requestResult, JsonObject.class);
+
+            System.out.println("Response: " + object.toString());
+
+            JsonElement id = object.get("id");
+
+            result = id.getAsString();
             System.out.println("Task ID: " + result);
         } catch (Exception e) {
             System.out.println(e.getMessage());
