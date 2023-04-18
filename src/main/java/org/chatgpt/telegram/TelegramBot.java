@@ -24,6 +24,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private boolean isHandlingMessages = true;
     private boolean isHandlingImages = false;
+    private boolean isHandlingDreamImages = false;
+    private boolean isHandlingGPTImages = false;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -33,7 +35,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final ChatGPTApi chatGPTApi;
     Map<String, Consumer<Long>> messageHandlers;
     Map<Long, List<String>> context;
-    private DreamApi dreamApi;
+    private final DreamApi dreamApi;
     List<String> styles;
     private String currentStyle;
 
@@ -64,14 +66,16 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-            if (query.equals("Dream Image Generator")) {
+            if (query.equals("Dream Image Generator") || isHandlingDreamImages) {
+                isHandlingDreamImages = true;
 //                if (currentStyle.isEmpty()) {
 //                    handleStyleSelection(chatId);
 //                } else {
 //                    handleDreamImagesMode(chatId);
 //                }
                 handleDreamImages(query, chatId);
-            } else if (query.equals("GPT Generator")) {
+            } else if (query.equals("GPT Generator") || isHandlingGPTImages) {
+                isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
 //                if (quantity == null && size == null) {
 //                    handleSizeSelection(chatId);
@@ -133,6 +137,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             resetValues();
             isHandlingMessages = true;
             isHandlingImages = false;
+            isHandlingGPTImages = false;
         }
         if (currentStyle != null) {
             sendMessage(getTranslate(MESSAGE_IMAGE_WRITE), chatId);
@@ -140,6 +145,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             resetValues();
             isHandlingMessages = true;
             isHandlingImages = false;
+            isHandlingDreamImages = false;
         }
     }
 
