@@ -15,8 +15,11 @@ public class TranslationConstants {
     public final static String MESSAGE_MESSAGE = "message.message";
     public final static String MESSAGE_MESSAGE_WRITE = "message.message.write";
     public final static String MESSAGE_IMAGE = "message.image";
+    public final static String MESSAGE_IMAGE_SELECT_STRATEGY = "message.image.select.strategy";
     public final static String MESSAGE_IMAGE_DESCRIPTION = "message.image.description";
     public final static String MESSAGE_IMAGE_WRITE = "message.image.write";
+    public final static String MESSAGE_IMAGE_STYLE_WRITE = "message.image.style.write";
+    public final static String MESSAGE_IMAGE_STYLE_RESULT = "message.image.style.result";
     public final static String MESSAGE_IMAGE_SIZE_RESULT = "message.image.settings.size.result";
     public final static String MESSAGE_IMAGE_QUANTITY_WRITE = "message.image.settings.quantity.write";
     public final static String MESSAGE_IMAGE_SIZE_WRITE = "message.image.settings.size.write";
@@ -28,4 +31,5 @@ public class TranslationConstants {
 
     //ERRORS
     public final static String ERROR_TIMEOUT = "error.timeout";
+
 }

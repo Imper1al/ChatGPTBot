@@ -2,6 +2,7 @@ package org.chatgpt.telegram;
 
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
+import org.chatgpt.constants.Constants;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -17,6 +18,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static org.chatgpt.constants.Constants.*;
 import static org.chatgpt.constants.TranslationConstants.*;
 import static org.chatgpt.utils.ResourceBundleUtils.*;
 
@@ -66,25 +68,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-            if (query.equals("Dream Image Generator") || isHandlingDreamImages) {
+            if (query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) {
                 isHandlingDreamImages = true;
-//                if (currentStyle.isEmpty()) {
-//                    handleStyleSelection(chatId);
-//                } else {
-//                    handleDreamImagesMode(chatId);
-//                }
                 handleDreamImages(query, chatId);
-            } else if (query.equals("GPT Generator") || isHandlingGPTImages) {
+            } else if (query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) {
                 isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
-//                if (quantity == null && size == null) {
-//                    handleSizeSelection(chatId);
-//                }
-//                if (quantity == null && quantityList.contains(query.getData())) {
-//                    handleQuantitySelection(query);
-//                } else if (size == null && sizeList.contains(query.getData())) {
-//                    handleSizeSelection(query);
-//                }
             }
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
@@ -125,9 +114,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleImageStrategy(long chatId) {
         List<String> strategy = new ArrayList<>();
-        strategy.add("GPT Generator");
-        strategy.add("Dream Image Generator");
-        sendMessage(getOptions(strategy), "Выберите режим: ", chatId);
+        strategy.add(GPT_IMAGE_STRATEGY);
+        strategy.add(DREAM_IMAGE_STRATEGY);
+        sendMessage(getOptions(strategy), MESSAGE_IMAGE_SELECT_STRATEGY, chatId);
     }
 
     private void handleImagesRequest(long chatId, String messageText) {
@@ -150,69 +139,36 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleDreamImages(String query, long chatId) {
-        if (isHandlingDreamImages) {
+        if (isHandlingDreamImages && !quantityList.contains(query) && !sizeList.contains(query)) {
             if (styles.contains(query)) {
                 currentStyle = query;
             }
             if (currentStyle == null) {
                 sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
-                sendMessage(getOptions(dreamApi.getStyles()), "Выберите интерисуемый вас стиль картинки: ", chatId);
+                sendMessage(getStyleOptions(dreamApi.getStyles()), MESSAGE_IMAGE_STYLE_WRITE, chatId);
             }
             if (currentStyle != null) {
-                sendMessage("Вы выбрали стиль картинки: " + currentStyle, chatId);
-                sendMessage("Опишите какую картинку вы бы хотели видеть: ", chatId);
+                sendMessage(MESSAGE_IMAGE_STYLE_RESULT + currentStyle, chatId);
+                sendMessage(MESSAGE_IMAGE_DESCRIPTION, chatId);
             }
         }
     }
 
     private void handleGPTImages(String query, long chatId) {
-        if (isHandlingGPTImages) {
+        if (isHandlingGPTImages && !styles.contains(query)) {
             if (quantityList.contains(query)) {
                 quantity = query;
                 sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
             }
-            if (quantityList.contains(query)) {
-                quantity = query;
+            if (sizeList.contains(query)) {
+                size = query;
                 sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
             }
             if (quantity == null && size == null) {
                 sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
             }
-//            if (quantity == null && quantityList.contains(query)) {
-//                sendMessage(getTranslate(MESSAGE_IMAGE_SIZE_RESULT) + query, chatId);
-//                sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
-//            } else if (size == null && sizeList.contains(query)) {
-//                if (quantity != null) {
-//                    sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
-//                } else {
-//                    sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
-//                }
-//            }
         }
     }
-
-//    private void handleQuantitySelection(CallbackQuery query) {
-//        Long chatId = query.getMessage().getChatId();
-//        quantity = query.getData();
-//        sendMessage(getTranslate(MESSAGE_IMAGE_SIZE_RESULT) + quantity, chatId);
-//        sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
-//    }
-//
-//    private void handleSizeSelection(CallbackQuery query) {
-//        Long chatId = query.getMessage().getChatId();
-//        size = query.getData();
-//        if (quantity != null) {
-//            sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
-//        } else {
-//            sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
-//        }
-//    }
-
-//    private void handleSizeSelection(long chatId) {
-//        if (isHandlingImages) {
-//            sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
-//        }
-//    }
 
     private void handleMessagesRequest(long chatId, String messageText) {
         resetValues();
@@ -388,6 +344,30 @@ public class TelegramBot extends TelegramLongPollingBot {
             row.add(button);
         }
         rows.add(row);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(rows);
+        return markup;
+    }
+
+    private InlineKeyboardMarkup getStyleOptions(List<String> values) {
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        int counter = 0;
+        for (String value : values) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(value);
+            button.setCallbackData(value);
+            row.add(button);
+            counter++;
+            if (counter == 4) {
+                rows.add(row);
+                row = new ArrayList<>();
+                counter = 0;
+            }
+        }
+        if (counter > 0) {
+            rows.add(row);
+        }
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(rows);
         return markup;
