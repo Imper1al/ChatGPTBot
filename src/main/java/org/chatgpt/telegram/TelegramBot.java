@@ -67,10 +67,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-            if (query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) {
+            if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
                 handleDreamImages(query, chatId);
-            } else if (query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) {
+            } else if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
                 isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
             }

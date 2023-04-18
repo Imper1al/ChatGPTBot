@@ -37,6 +37,7 @@ public class DreamImage {
             con.setRequestProperty("Content-Type", "application/json");
             OutputStream os = con.getOutputStream();
             String request = createRequest(styleName, description);
+            System.out.println("Request: " + request);
             os.write(request.getBytes());
             os.flush();
         } catch (IOException e) {
@@ -56,6 +57,7 @@ public class DreamImage {
                 responseBuilder.append(new String(buffer, 0, bytesRead));
             }
             String response = responseBuilder.toString();
+            System.out.println("Response: " + response);
             JSONObject jsonResponse = new JSONObject(response);
 
             String imageUrl = jsonResponse.getString("url");
