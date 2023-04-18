@@ -29,10 +29,12 @@ public class DreamImage {
     public InputFile saveImage(String url) {
         InputFile image = null;
         try {
-            FileUtils.copyURLToFile(new URL(url), new File("image.png"));
-            image = new InputFile(new File("image.png"));
+            if(url != null) {
+                FileUtils.copyURLToFile(new URL(url), new File("image.png"));
+                image = new InputFile(new File("image.png"));
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return image;
     }
