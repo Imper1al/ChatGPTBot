@@ -155,6 +155,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void heightAndWeightCheck(String messageText, long chatId) {
         if (currentStyle != null) {
+            if (isHeight) {
+                int result = Integer.parseInt(messageText);
+                if (result >= 1 && result <= 8000) {
+                    height = messageText;
+                    isHeight = false;
+                } else {
+                    sendMessage("Не правильно введена высота!", chatId);
+                }
+            }
             if (isWidth) {
                 int result = Integer.parseInt(messageText);
                 if (result >= 1 && result <= 8000) {
@@ -163,15 +172,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     isHeight = true;
                 } else {
                     sendMessage("Не правильно введена ширина!", chatId);
-                }
-            }
-            if (isHeight) {
-                int result = Integer.parseInt(messageText);
-                if (result >= 1 && result <= 8000) {
-                    height = messageText;
-                    isHeight = false;
-                } else {
-                    sendMessage("Не правильно введена высота!", chatId);
                 }
             }
         }
@@ -227,13 +227,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleResetCommand(long chatId) {
         resetValues();
+        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
         if (isHandlingImages) {
             handleImagesMode(chatId);
         }
         if (isHandlingMessages) {
             context.put(chatId, new ArrayList<>());
         }
-        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
     }
 
     private void handleAboutCommand(long chatId) {
