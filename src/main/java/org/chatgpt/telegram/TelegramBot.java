@@ -126,6 +126,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void errorHandler(long chatId) {
+        System.out.println("Error handler start");
         if(!dreamApi.getErrors().get(DREAM_IMAGE_STATUS_FAILED).isEmpty()) {
             sendMessage(dreamApi.getErrors().get(DREAM_IMAGE_STATUS_FAILED), chatId);
             dreamApi.getErrors().clear();
