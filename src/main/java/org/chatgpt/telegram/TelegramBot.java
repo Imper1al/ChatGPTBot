@@ -76,7 +76,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-            if(query.equals("next_") || query.equals("_previus")) {
+            if(isHandlingDreamImages) {
                 checkPaginationCallback(query, chatId, update.getMessage().getMessageId());
             }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
