@@ -141,6 +141,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (currentStyle != null) {
             if (isDescription) {
+                System.out.println("Before send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
                 sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                 sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
                 if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
@@ -153,6 +154,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 isDescription = false;
                 isHeight = false;
                 isWidth = false;
+                System.out.println("After send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
             }
             heightAndWeightCheck(messageText, chatId);
         }
