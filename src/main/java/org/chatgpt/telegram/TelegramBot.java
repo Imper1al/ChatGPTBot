@@ -136,6 +136,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             isDescription = false;
             isHeight = false;
             isWidth = false;
+            System.out.println("Error handler was finished");
         }
     }
 
