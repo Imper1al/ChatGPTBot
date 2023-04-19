@@ -12,6 +12,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.chatgpt.constants.Constants;
+import org.chatgpt.constants.TranslationConstants;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.BufferedReader;
@@ -20,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DreamApi {
@@ -34,10 +36,12 @@ public class DreamApi {
     private HttpGet get;
     private String taskId;
     private String resultStatus;
+    Map<String, String> errors;
 
     public DreamApi() {
         this.dreamImage = new DreamImage();
         this.dreamStyles = new DreamStyles();
+        this.errors = new HashMap<>();
     }
 
     private void createConnection() {
@@ -85,20 +89,27 @@ public class DreamApi {
         put.setEntity(entity);
         createRequest(put);
         String finalResult = "";
+        int wait = 0;
         while (true) {
+            if(wait >= 30) {
+                break;
+            }
             JsonObject result = checkGenerator();
-            System.out.println("Result in cycle: " + result);
             JsonElement status = result.get("state");
             if (status.getAsString().equals(Constants.DREAM_IMAGE_STATUS_PENDING)) {
-                System.out.println("Status: pending");
+                wait += 1;
+                System.out.println("Status: pending " + wait);
             }
             if (status.getAsString().equals(Constants.DREAM_IMAGE_STATUS_COMPLETED)) {
                 finalResult = result.get("result").getAsString();
+                System.out.println("Result in cycle: " + result);
                 break;
             }
             if (status.getAsString().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
                 resultStatus = "failed";
                 System.out.println("Status: failed");
+                System.out.println("Result in cycle: " + result);
+                errors.put(resultStatus, TranslationConstants.ERROR_GENERATION);
                 break;
             }
             try {
@@ -164,5 +175,9 @@ public class DreamApi {
 
     public String getResultStatus() {
         return resultStatus;
+    }
+
+    public Map<String, String> getErrors() {
+        return errors;
     }
 }

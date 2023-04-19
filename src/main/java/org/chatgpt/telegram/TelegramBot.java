@@ -75,6 +75,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
+            errorHandler(chatId);
             String query = callbackQuery.getData();
 //            if(isHandlingDreamImages) {
 //                checkPaginationCallback(query, chatId, update.getMessage().getMessageId());
@@ -89,6 +90,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             long chatId = message.getChatId();
+            errorHandler(chatId);
             String messageText = message.getText();
             User user = message.getFrom();
 
@@ -120,6 +122,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
             }
+        }
+    }
+
+    private void errorHandler(long chatId) {
+        if(!dreamApi.getErrors().get(DREAM_IMAGE_STATUS_FAILED).isEmpty()) {
+            sendMessage(dreamApi.getErrors().get(DREAM_IMAGE_STATUS_FAILED), chatId);
+            dreamApi.getErrors().clear();
+            isHandlingMessages = true;
+            isHandlingImages = false;
+            isHandlingDreamImages = false;
+            isDescription = false;
+            isHeight = false;
+            isWidth = false;
         }
     }
 
