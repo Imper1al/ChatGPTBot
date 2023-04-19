@@ -13,6 +13,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.chatgpt.constants.Constants;
 import org.chatgpt.constants.TranslationConstants;
+import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.BufferedReader;
@@ -109,7 +110,7 @@ public class DreamApi {
                 resultStatus = "failed";
                 System.out.println("Status: failed");
                 System.out.println("Result in cycle: " + result);
-                errors.put(resultStatus, TranslationConstants.ERROR_GENERATION);
+                errors.put(resultStatus, ResourceBundleUtils.getTranslate(TranslationConstants.ERROR_GENERATION));
                 break;
             }
             try {
