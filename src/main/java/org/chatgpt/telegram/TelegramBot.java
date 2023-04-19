@@ -8,6 +8,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -45,6 +46,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String currentStyle;
     private String width;
     private String height;
+    private Integer currentPage;
+    private Integer totalPages;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
@@ -73,6 +76,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
+            if(query.equals("next_") || query.equals("_previus")) {
+                checkPaginationCallback(query, chatId, update.getMessage().getMessageId());
+            }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
                 handleDreamImages(query, chatId);
@@ -193,7 +199,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 currentStyle = query;
             }
             if (currentStyle == null) {
-                sendMessage(getStyleOptions(dreamApi.getStyles().keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
+                sendMessage(getStyleOptions(styles.keySet(), currentPage, totalPages), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
             }
             if (currentStyle != null && width == null) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
@@ -266,7 +272,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleImagesMode(long chatId) {
         isHandlingMessages = false;
         isHandlingImages = true;
-        isHandlingGPTImages= false;
+        isHandlingGPTImages = false;
         isHandlingDreamImages = false;
         sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
         resetValues();
@@ -400,17 +406,44 @@ public class TelegramBot extends TelegramLongPollingBot {
         return markup;
     }
 
-    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
+//    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
+//        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+//        List<InlineKeyboardButton> row = new ArrayList<>();
+//        int counter = 0;
+//        for (String value : values) {
+//            InlineKeyboardButton button = new InlineKeyboardButton();
+//            button.setText(value);
+//            button.setCallbackData(value);
+//            row.add(button);
+//            counter++;
+//            if (counter == 4) {
+//                rows.add(row);
+//                row = new ArrayList<>();
+//                counter = 0;
+//            }
+//        }
+//        if (counter > 0) {
+//            rows.add(row);
+//        }
+//        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+//        markup.setKeyboard(rows);
+//        return markup;
+//    }
+
+    private InlineKeyboardMarkup getStyleOptions(Set<String> values, int currentPage, int totalPages) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         int counter = 0;
-        for (String value : values) {
+        int startIndex = (currentPage - 1) * 9;
+        int endIndex = Math.min(startIndex + 9, values.size());
+        List<String> pageValues = new ArrayList<>(values).subList(startIndex, endIndex);
+        for (String value : pageValues) {
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(value);
             button.setCallbackData(value);
             row.add(button);
             counter++;
-            if (counter == 4) {
+            if (counter == 3) {
                 rows.add(row);
                 row = new ArrayList<>();
                 counter = 0;
@@ -419,9 +452,39 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (counter > 0) {
             rows.add(row);
         }
+        List<InlineKeyboardButton> paginationRow = new ArrayList<>();
+        if (currentPage > 1) {
+            InlineKeyboardButton previousButton = new InlineKeyboardButton();
+            previousButton.setText("<< Prev");
+            previousButton.setCallbackData("prev_" + (currentPage - 1));
+            paginationRow.add(previousButton);
+        }
+        if (currentPage < totalPages) {
+            InlineKeyboardButton nextButton = new InlineKeyboardButton();
+            nextButton.setText("Next >>");
+            nextButton.setCallbackData("next_" + (currentPage + 1));
+            paginationRow.add(nextButton);
+        }
+        rows.add(paginationRow);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(rows);
         return markup;
+    }
+
+    private void checkPaginationCallback(String paginationData, long chatId, Integer messageId) {
+        String[] parts = paginationData.split("_");
+        int currentPage = Integer.parseInt(parts[1]);
+        int totalPages = (int) Math.ceil((double) styles.keySet().size() / 9);
+        InlineKeyboardMarkup markup = getStyleOptions(styles.keySet(), currentPage, totalPages);
+        EditMessageReplyMarkup editMarkup = new EditMessageReplyMarkup();
+        editMarkup.setChatId(chatId);
+        editMarkup.setMessageId(messageId);
+        editMarkup.setReplyMarkup(markup);
+        try {
+            execute(editMarkup);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     private void resetValues() {
