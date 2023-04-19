@@ -75,7 +75,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
-            errorHandler(chatId);
             String query = callbackQuery.getData();
 //            if(isHandlingDreamImages) {
 //                checkPaginationCallback(query, chatId, update.getMessage().getMessageId());
@@ -90,7 +89,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             long chatId = message.getChatId();
-            errorHandler(chatId);
             String messageText = message.getText();
             User user = message.getFrom();
 
@@ -136,6 +134,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             isDescription = false;
             isHeight = false;
             isWidth = false;
+            resetValues();
             System.out.println("Error handler was finished");
         }
     }
@@ -158,20 +157,25 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (currentStyle != null) {
             if (isDescription) {
-                System.out.println("Before send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
-                isHandlingMessages = true;
-                isHandlingImages = false;
-                isHandlingDreamImages = false;
-                isDescription = false;
-                isHeight = false;
-                isWidth = false;
-                System.out.println("After send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
-                sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
-                sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
-                if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
-                    sendMessage(getTranslate(ERROR_GENERATION), chatId);
+                try {
+                    System.out.println("Before send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
+                    isHandlingMessages = true;
+                    isHandlingImages = false;
+                    isHandlingDreamImages = false;
+                    isDescription = false;
+                    isHeight = false;
+                    isWidth = false;
+                    System.out.println("After send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
+                    sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
+                    sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
+                    if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
+                        sendMessage(getTranslate(ERROR_GENERATION), chatId);
+                    }
+                    resetValues();
+                }catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    errorHandler(chatId);
                 }
-                resetValues();
             }
             heightAndWeightCheck(messageText, chatId);
         }
