@@ -81,7 +81,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
-                handleDreamImages(query, chatId);
+                handleDreamImages(query, chatId, callbackQuery.getMessage().getMessageId());
             } else if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
                 isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
@@ -216,13 +216,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleDreamImages(String query, long chatId) {
+    private void handleDreamImages(String query, long chatId, int messageId) {
         if (isHandlingDreamImages && !quantityList.contains(query) && !sizeList.contains(query)) {
             if (styles.containsKey(query)) {
                 currentStyle = query;
             }
             if (currentStyle == null) {
-                sendMessage(getStyleOptions(styles.keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
+//                sendMessage(getStyleOptions(styles.keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
+                checkPaginationCallback(query, chatId, messageId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
+                checkPaginationCallback(query, chatId, messageId);
             }
             if (currentStyle != null && width == null) {
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
