@@ -12,10 +12,12 @@ import java.net.URL;
 
 public class DreamImage {
 
-    public String createRequest(String styleId, String description) {
+    public String createRequest(String styleId, String width, String height, String description) {
         JSONObject inputSpec = new JSONObject();
         inputSpec.put("style", Integer.valueOf(styleId));
         inputSpec.put("prompt", description);
+        inputSpec.put("width", width);
+        inputSpec.put("height", height);
 
         JSONObject json = new JSONObject();
         json.put("input_spec", inputSpec);
@@ -27,10 +29,12 @@ public class DreamImage {
     public InputFile saveImage(String url) {
         InputFile image = null;
         try {
-            FileUtils.copyURLToFile(new URL(url), new File("image.png"));
-            image = new InputFile(new File("image.png"));
+            if(url != null) {
+                FileUtils.copyURLToFile(new URL(url), new File("image.png"));
+                image = new InputFile(new File("image.png"));
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return image;
     }

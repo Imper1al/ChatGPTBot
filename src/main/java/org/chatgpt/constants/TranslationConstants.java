@@ -21,7 +21,8 @@ public class TranslationConstants {
     public final static String MESSAGE_IMAGE_DREAM_WRITE = "message.image.dream.write";
     public final static String MESSAGE_IMAGE_STYLE_WRITE = "message.image.style.write";
     public final static String MESSAGE_IMAGE_STYLE_RESULT = "message.image.style.result";
-    public final static String MESSAGE_IMAGE_SIZE_RESULT = "message.image.settings.size.result";
+    public final static String MESSAGE_IMAGE_HEIGHT_WRITE = "message.image.height.write";
+    public final static String MESSAGE_IMAGE_WIDTH_WRITE = "message.image.width.write";
     public final static String MESSAGE_IMAGE_QUANTITY_WRITE = "message.image.settings.quantity.write";
     public final static String MESSAGE_IMAGE_SIZE_WRITE = "message.image.settings.size.write";
     public final static String MESSAGE_DONATE_BEFORE = "message.donate.before.link";
@@ -32,5 +33,12 @@ public class TranslationConstants {
 
     //ERRORS
     public final static String ERROR_TIMEOUT = "error.timeout";
+    public final static String ERROR_GENERATION = "error.generation";
+    public final static String ERROR_HEIGHT = "error.height";
+    public final static String ERROR_WIDTH = "error.width";
+
+    //Pagination
+    public final static String PAGINATION_PREVIOUS = "pagination.previous";
+    public final static String PAGINATION_NEXT = "pagination.next";
 
 }

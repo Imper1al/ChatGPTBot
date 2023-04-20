@@ -2,11 +2,13 @@ package org.chatgpt.telegram;
 
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
+import org.chatgpt.constants.Constants;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -27,6 +29,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isHandlingImages = false;
     private boolean isHandlingDreamImages = false;
     private boolean isHandlingGPTImages = false;
+    private boolean isWidth = false;
+    private boolean isHeight = false;
+    private boolean isDescription = false;
+    private boolean isPagination = false;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -39,6 +45,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final DreamApi dreamApi;
     Map<String, String> styles;
     private String currentStyle;
+    private String width;
+    private String height;
+    private int currentPage = 1;
+    private int totalPages;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
@@ -67,9 +77,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
+            if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
+                checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
+            }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
-                handleDreamImages(query, chatId);
+                handleDreamImages(query, chatId, callbackQuery.getMessage());
             } else if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
                 isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
@@ -111,6 +124,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void errorHandler(long chatId) {
+        if(!dreamApi.getErrors().isEmpty()) {
+            sendMessage(dreamApi.getErrors().get(DREAM_IMAGE_STATUS_FAILED), chatId);
+            dreamApi.getErrors().clear();
+            isHandlingMessages = true;
+            isHandlingImages = false;
+            isHandlingDreamImages = false;
+            isDescription = false;
+            isHeight = false;
+            isWidth = false;
+            resetValues();
+        }
+    }
+
     private void handleImageStrategy(long chatId) {
         List<String> strategy = new ArrayList<>();
         strategy.add(GPT_IMAGE_STRATEGY);
@@ -128,26 +155,80 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHandlingGPTImages = false;
         }
         if (currentStyle != null) {
-            sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
-            sendImage(dreamApi.generateImages(styles.get(currentStyle), messageText), chatId);
-            resetValues();
-            isHandlingMessages = true;
-            isHandlingImages = false;
-            isHandlingDreamImages = false;
+            if (isDescription) {
+                try {
+                    isHandlingMessages = true;
+                    isHandlingImages = false;
+                    isHandlingDreamImages = false;
+                    isDescription = false;
+                    isHeight = false;
+                    isWidth = false;
+                    sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
+                    sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
+                    if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
+                        sendMessage(getTranslate(ERROR_GENERATION), chatId);
+                    }
+                    resetValues();
+                }catch (Exception e) {
+                    System.out.println(e.getMessage());
+                    errorHandler(chatId);
+                }
+            }
+            heightAndWeightCheck(messageText, chatId);
         }
     }
 
-    private void handleDreamImages(String query, long chatId) {
+    private void heightAndWeightCheck(String messageText, long chatId) {
+        if (currentStyle != null) {
+            if (isHeight) {
+                try {
+                    int result = Integer.parseInt(messageText);
+                    if (result >= 1 && result <= 8000) {
+                        height = messageText;
+                        isHeight = false;
+                        sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                        isDescription = true;
+                    } else {
+                        sendMessage(getTranslate(ERROR_HEIGHT), chatId);
+                    }
+                } catch (NumberFormatException e) {
+                    sendMessage(getTranslate(ERROR_HEIGHT), chatId);
+                }
+            }
+            if (isWidth) {
+                try {
+                    int result = Integer.parseInt(messageText);
+                    if (result >= 1 && result <= 8000) {
+                        width = messageText;
+                        isWidth = false;
+                        isHeight = true;
+                        sendMessage(getTranslate(MESSAGE_IMAGE_HEIGHT_WRITE), chatId);
+                    } else {
+                        sendMessage(getTranslate(ERROR_WIDTH), chatId);
+                    }
+                } catch (NumberFormatException e) {
+                    sendMessage(getTranslate(ERROR_WIDTH), chatId);
+                }
+            }
+        }
+    }
+
+    private void handleDreamImages(String query, long chatId, Message message) {
         if (isHandlingDreamImages && !quantityList.contains(query) && !sizeList.contains(query)) {
             if (styles.containsKey(query)) {
                 currentStyle = query;
             }
-            if (currentStyle == null) {
-                sendMessage(getStyleOptions(dreamApi.getStyles().keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
+            if (currentStyle == null && !isPagination) {
+                message.setText(getTranslate(MESSAGE_IMAGE_STYLE_WRITE));
+                checkPaginationCallback(query, chatId, message.getMessageId());
+                isPagination = true;
             }
-            if (currentStyle != null) {
+            if (currentStyle != null && width == null) {
+                isPagination = false;
+                currentPage = 1;
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_WIDTH_WRITE), chatId);
+                isWidth = true;
             }
         }
     }
@@ -186,13 +267,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleResetCommand(long chatId) {
         resetValues();
+        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
+        isHandlingDreamImages = false;
+        isHandlingGPTImages = false;
+        isWidth = false;
+        isHeight = false;
+        isDescription = false;
+        isPagination = false;
         if (isHandlingImages) {
-            sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
+            handleImagesMode(chatId);
         }
         if (isHandlingMessages) {
             context.put(chatId, new ArrayList<>());
         }
-        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
     }
 
     private void handleAboutCommand(long chatId) {
@@ -215,7 +302,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleImagesMode(long chatId) {
         isHandlingMessages = false;
         isHandlingImages = true;
-        isHandlingGPTImages= false;
+        isHandlingGPTImages = false;
         isHandlingDreamImages = false;
         sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
         resetValues();
@@ -353,13 +440,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         List<InlineKeyboardButton> row = new ArrayList<>();
         int counter = 0;
-        for (String value : values) {
+        int startIndex = (currentPage - 1) * 9;
+        int endIndex = Math.min(startIndex + 9, values.size());
+        List<String> pageValues = new ArrayList<>(values).subList(startIndex, endIndex);
+        for (String value : pageValues) {
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(value);
             button.setCallbackData(value);
             row.add(button);
             counter++;
-            if (counter == 4) {
+            if (counter == 3) {
                 rows.add(row);
                 row = new ArrayList<>();
                 counter = 0;
@@ -368,14 +458,50 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (counter > 0) {
             rows.add(row);
         }
+        List<InlineKeyboardButton> paginationRow = new ArrayList<>();
+        if (currentPage > 1) {
+            InlineKeyboardButton previousButton = new InlineKeyboardButton();
+            previousButton.setText(getTranslate(PAGINATION_PREVIOUS));
+            previousButton.setCallbackData(getTranslate(PAGINATION_PREVIOUS));
+            paginationRow.add(previousButton);
+        }
+        if (currentPage < totalPages) {
+            InlineKeyboardButton nextButton = new InlineKeyboardButton();
+            nextButton.setText(getTranslate(PAGINATION_NEXT));
+            nextButton.setCallbackData(getTranslate(PAGINATION_NEXT));
+            paginationRow.add(nextButton);
+        }
+        rows.add(paginationRow);
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(rows);
         return markup;
+    }
+
+    private void checkPaginationCallback(String paginationData, long chatId, int messageId) {
+        totalPages = (int) Math.ceil((double) styles.keySet().size() / 9);
+        if (paginationData.equals(getTranslate(PAGINATION_PREVIOUS))) {
+            currentPage -= 1;
+        }
+        if (paginationData.equals(getTranslate(PAGINATION_NEXT))) {
+            currentPage += 1;
+        }
+        InlineKeyboardMarkup markup = getStyleOptions(styles.keySet());
+        EditMessageReplyMarkup editMarkup = new EditMessageReplyMarkup();
+        editMarkup.setChatId(chatId);
+        editMarkup.setMessageId(messageId);
+        editMarkup.setReplyMarkup(markup);
+        try {
+            execute(editMarkup);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     private void resetValues() {
         this.quantity = null;
         this.size = null;
         this.currentStyle = null;
+        this.width = null;
+        this.height = null;
     }
 }
