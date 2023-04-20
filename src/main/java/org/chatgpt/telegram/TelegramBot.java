@@ -46,8 +46,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String currentStyle;
     private String width;
     private String height;
-//    private Integer currentPage;
-//    private Integer totalPages;
+    private int currentPage = 1;
+    private int totalPages;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
@@ -76,9 +76,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-//            if(isHandlingDreamImages) {
-//                checkPaginationCallback(query, chatId, update.getMessage().getMessageId());
-//            }
+            if (isHandlingDreamImages && (query.equals("Предыдущий") || query.equals("Следующий"))) {
+                checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
+            }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
                 handleDreamImages(query, chatId);
@@ -429,44 +429,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         return markup;
     }
 
-    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        int counter = 0;
-        for (String value : values) {
-            InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(value);
-            button.setCallbackData(value);
-            row.add(button);
-            counter++;
-            if (counter == 4) {
-                rows.add(row);
-                row = new ArrayList<>();
-                counter = 0;
-            }
-        }
-        if (counter > 0) {
-            rows.add(row);
-        }
-        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-        markup.setKeyboard(rows);
-        return markup;
-    }
-
-//    private InlineKeyboardMarkup getStyleOptions(Set<String> values, int currentPage, int totalPages) {
+//    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
 //        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
 //        List<InlineKeyboardButton> row = new ArrayList<>();
 //        int counter = 0;
-//        int startIndex = (currentPage - 1) * 9;
-//        int endIndex = Math.min(startIndex + 9, values.size());
-//        List<String> pageValues = new ArrayList<>(values).subList(startIndex, endIndex);
-//        for (String value : pageValues) {
+//        for (String value : values) {
 //            InlineKeyboardButton button = new InlineKeyboardButton();
 //            button.setText(value);
 //            button.setCallbackData(value);
 //            row.add(button);
 //            counter++;
-//            if (counter == 3) {
+//            if (counter == 4) {
 //                rows.add(row);
 //                row = new ArrayList<>();
 //                counter = 0;
@@ -475,40 +448,71 @@ public class TelegramBot extends TelegramLongPollingBot {
 //        if (counter > 0) {
 //            rows.add(row);
 //        }
-//        List<InlineKeyboardButton> paginationRow = new ArrayList<>();
-//        if (currentPage > 1) {
-//            InlineKeyboardButton previousButton = new InlineKeyboardButton();
-//            previousButton.setText("<< Prev");
-//            previousButton.setCallbackData("prev_" + (currentPage - 1));
-//            paginationRow.add(previousButton);
-//        }
-//        if (currentPage < totalPages) {
-//            InlineKeyboardButton nextButton = new InlineKeyboardButton();
-//            nextButton.setText("Next >>");
-//            nextButton.setCallbackData("next_" + (currentPage + 1));
-//            paginationRow.add(nextButton);
-//        }
-//        rows.add(paginationRow);
 //        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
 //        markup.setKeyboard(rows);
 //        return markup;
 //    }
-//
-//    private void checkPaginationCallback(String paginationData, long chatId, Integer messageId) {
-//        String[] parts = paginationData.split("_");
-//        int currentPage = Integer.parseInt(parts[1]);
-//        int totalPages = (int) Math.ceil((double) styles.keySet().size() / 9);
-//        InlineKeyboardMarkup markup = getStyleOptions(styles.keySet(), currentPage, totalPages);
-//        EditMessageReplyMarkup editMarkup = new EditMessageReplyMarkup();
-//        editMarkup.setChatId(chatId);
-//        editMarkup.setMessageId(messageId);
-//        editMarkup.setReplyMarkup(markup);
-//        try {
-//            execute(editMarkup);
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//        }
-//    }
+
+    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        List<InlineKeyboardButton> row = new ArrayList<>();
+        int counter = 0;
+        int startIndex = (currentPage - 1) * 9;
+        int endIndex = Math.min(startIndex + 9, values.size());
+        List<String> pageValues = new ArrayList<>(values).subList(startIndex, endIndex);
+        for (String value : pageValues) {
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(value);
+            button.setCallbackData(value);
+            row.add(button);
+            counter++;
+            if (counter == 3) {
+                rows.add(row);
+                row = new ArrayList<>();
+                counter = 0;
+            }
+        }
+        if (counter > 0) {
+            rows.add(row);
+        }
+        List<InlineKeyboardButton> paginationRow = new ArrayList<>();
+        if (currentPage > 1) {
+            InlineKeyboardButton previousButton = new InlineKeyboardButton();
+            previousButton.setText("Предыдущий");
+            previousButton.setCallbackData("Предыдущий");
+            paginationRow.add(previousButton);
+        }
+        if (currentPage < totalPages) {
+            InlineKeyboardButton nextButton = new InlineKeyboardButton();
+            nextButton.setText("Следующий");
+            nextButton.setCallbackData("Следующий");
+            paginationRow.add(nextButton);
+        }
+        rows.add(paginationRow);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(rows);
+        return markup;
+    }
+
+    private void checkPaginationCallback(String paginationData, long chatId, int messageId) {
+        totalPages = (int) Math.ceil((double) styles.keySet().size() / 9);
+        if (paginationData.equals("Предыдущий")) {
+            currentPage -= 1;
+        }
+        if (paginationData.equals("Следующий")) {
+            currentPage += 1;
+        }
+        InlineKeyboardMarkup markup = getStyleOptions(styles.keySet());
+        EditMessageReplyMarkup editMarkup = new EditMessageReplyMarkup();
+        editMarkup.setChatId(chatId);
+        editMarkup.setMessageId(messageId);
+        editMarkup.setReplyMarkup(markup);
+        try {
+            execute(editMarkup);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 
     private void resetValues() {
         this.quantity = null;
