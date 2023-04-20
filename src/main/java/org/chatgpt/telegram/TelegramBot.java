@@ -32,6 +32,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isWidth = false;
     private boolean isHeight = false;
     private boolean isDescription = false;
+    private boolean isPagination = false;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -76,7 +77,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-            if (isHandlingDreamImages && (query.equals("Предыдущий") || query.equals("Следующий"))) {
+            if (isHandlingDreamImages && isPagination && (query.equals("Предыдущий") || query.equals("Следующий"))) {
                 checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
             }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
@@ -221,13 +222,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (styles.containsKey(query)) {
                 currentStyle = query;
             }
-            if (currentStyle == null) {
+            if (currentStyle == null && !isPagination) {
 //                sendMessage(getStyleOptions(styles.keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
-                checkPaginationCallback(query, chatId, messageId);
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
                 checkPaginationCallback(query, chatId, messageId);
+                isPagination = true;
             }
             if (currentStyle != null && width == null) {
+                isPagination = false;
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
                 sendMessage(getTranslate(MESSAGE_IMAGE_WIDTH_WRITE), chatId);
                 isWidth = true;
@@ -270,6 +272,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleResetCommand(long chatId) {
         resetValues();
         sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
+        isHandlingDreamImages = false;
+        isHandlingGPTImages = false;
+        isWidth = false;
+        isHeight = false;
+        isDescription = false;
+        isPagination = false;
         if (isHandlingImages) {
             handleImagesMode(chatId);
         }
