@@ -66,6 +66,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.sizeList = new ArrayList<>(List.of("256x256", "512x512", "1024x1024"));
         try {
             strategy = new ArrayList<>();
+            strategy.add(GPT_IMAGE_STRATEGY);
             styles = dreamApi.getStyles();
             strategy.add(DREAM_IMAGE_STRATEGY);
         } catch (Exception e) {
@@ -146,7 +147,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleImageStrategy(long chatId) {
-        strategy.add(GPT_IMAGE_STRATEGY);
         sendMessage(getOptions(strategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
     }
 
