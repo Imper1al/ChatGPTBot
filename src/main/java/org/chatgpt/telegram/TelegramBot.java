@@ -87,7 +87,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
                 handleDreamImages(query, chatId, callbackQuery.getMessage());
-            } else if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
+            }
+            if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
                 isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
             }
@@ -240,7 +241,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleGPTImages(String query, long chatId) {
-        if (isHandlingGPTImages && !styles.containsKey(query)) {
+        if (isHandlingGPTImages) {
             if (quantityList.contains(query)) {
                 quantity = query;
                 sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
