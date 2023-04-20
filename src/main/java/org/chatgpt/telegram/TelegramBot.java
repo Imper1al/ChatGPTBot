@@ -82,7 +82,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
                 isHandlingDreamImages = true;
-                handleDreamImages(query, chatId, callbackQuery.getMessage().getMessageId());
+                handleDreamImages(query, chatId, callbackQuery.getMessage());
             } else if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
                 isHandlingGPTImages = true;
                 handleGPTImages(query, chatId);
@@ -217,15 +217,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleDreamImages(String query, long chatId, int messageId) {
+    private void handleDreamImages(String query, long chatId, Message message) {
         if (isHandlingDreamImages && !quantityList.contains(query) && !sizeList.contains(query)) {
             if (styles.containsKey(query)) {
                 currentStyle = query;
             }
             if (currentStyle == null && !isPagination) {
-//                sendMessage(getStyleOptions(styles.keySet()), getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
-                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
-                checkPaginationCallback(query, chatId, messageId);
+//                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
+                message.setText(getTranslate(MESSAGE_IMAGE_STYLE_WRITE));
+                checkPaginationCallback(query, chatId, message.getMessageId());
                 isPagination = true;
             }
             if (currentStyle != null && width == null) {
@@ -439,30 +439,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         markup.setKeyboard(rows);
         return markup;
     }
-
-//    private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
-//        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-//        List<InlineKeyboardButton> row = new ArrayList<>();
-//        int counter = 0;
-//        for (String value : values) {
-//            InlineKeyboardButton button = new InlineKeyboardButton();
-//            button.setText(value);
-//            button.setCallbackData(value);
-//            row.add(button);
-//            counter++;
-//            if (counter == 4) {
-//                rows.add(row);
-//                row = new ArrayList<>();
-//                counter = 0;
-//            }
-//        }
-//        if (counter > 0) {
-//            rows.add(row);
-//        }
-//        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-//        markup.setKeyboard(rows);
-//        return markup;
-//    }
 
     private InlineKeyboardMarkup getStyleOptions(Set<String> values) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
