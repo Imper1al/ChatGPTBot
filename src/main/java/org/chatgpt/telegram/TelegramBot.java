@@ -253,13 +253,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleMessagesRequest(long chatId, String messageText, Integer messageThreadId) {
         resetValues();
-        sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId, messageThreadId);
+//        sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId, messageThreadId);
         String generateMessageAnswerFromChatGPT = generateMessageAnswerFromChatGPT(messageText, chatId);
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
         if (errorHandler(generateMessageAnswerFromChatGPT)) {
-            sendMessage(getTranslate(ERROR_TIMEOUT), chatId);
+            sendMessage(getTranslate(ERROR_TIMEOUT), chatId, messageThreadId);
         } else {
-            sendMessage(generateMessageAnswerFromChatGPT, chatId);
+            sendMessage(generateMessageAnswerFromChatGPT, chatId, messageThreadId);
         }
     }
 
