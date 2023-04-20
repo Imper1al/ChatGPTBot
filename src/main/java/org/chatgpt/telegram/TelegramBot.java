@@ -6,6 +6,7 @@ import org.chatgpt.constants.Constants;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
@@ -112,7 +113,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 Consumer<Long> defaultHandler = (ch) -> {
                     if (!messageHandlers.containsKey(messageText) && message.hasText()) {
                         if (isHandlingMessages) {
-                            handleMessagesRequest(chatId, messageText);
+                            Integer messageThreadId = message.getMessageThreadId();
+                            handleMessagesRequest(chatId, messageText, messageThreadId);
                         } else if (isHandlingImages) {
                             handleImagesRequest(chatId, messageText);
                         }
@@ -249,9 +251,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleMessagesRequest(long chatId, String messageText) {
+    private void handleMessagesRequest(long chatId, String messageText, Integer messageThreadId) {
         resetValues();
-        sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId);
+        sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId, messageThreadId);
         String generateMessageAnswerFromChatGPT = generateMessageAnswerFromChatGPT(messageText, chatId);
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
         if (errorHandler(generateMessageAnswerFromChatGPT)) {
@@ -352,6 +354,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage.setReplyMarkup(attributes());
         sendMessage.setParseMode(ParseMode.MARKDOWN);
         try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            System.out.println("TelegramApiException: " + e.getMessage());
+        }
+    }
+
+    private void sendMessage(String message, long chatId, Integer messageThreadId) {
+        SendChatAction action = new SendChatAction(String.valueOf(chatId), "typing", messageThreadId);
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText(message);
+        sendMessage.setReplyMarkup(attributes());
+        sendMessage.setParseMode(ParseMode.MARKDOWN);
+        try {
+            execute(action);
             execute(sendMessage);
         } catch (TelegramApiException e) {
             System.out.println("TelegramApiException: " + e.getMessage());
