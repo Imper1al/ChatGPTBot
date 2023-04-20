@@ -77,7 +77,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
             String query = callbackQuery.getData();
-            if (isHandlingDreamImages && isPagination && (query.equals("Предыдущий") || query.equals("Следующий"))) {
+            if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
                 checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
             }
             if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
@@ -125,7 +125,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void errorHandler(long chatId) {
-        System.out.println("Error handler start");
         if(!dreamApi.getErrors().isEmpty()) {
             sendMessage(dreamApi.getErrors().get(DREAM_IMAGE_STATUS_FAILED), chatId);
             dreamApi.getErrors().clear();
@@ -136,7 +135,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHeight = false;
             isWidth = false;
             resetValues();
-            System.out.println("Error handler was finished");
         }
     }
 
@@ -159,14 +157,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (currentStyle != null) {
             if (isDescription) {
                 try {
-                    System.out.println("Before send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
                     isHandlingMessages = true;
                     isHandlingImages = false;
                     isHandlingDreamImages = false;
                     isDescription = false;
                     isHeight = false;
                     isWidth = false;
-                    System.out.println("After send image: " + isHandlingDreamImages + " " + isHandlingImages + " " + isHandlingDreamImages + " " + isDescription + " " + isWidth + " " + isHeight);
                     sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                     sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
                     if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
@@ -223,13 +219,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 currentStyle = query;
             }
             if (currentStyle == null && !isPagination) {
-//                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_WRITE), chatId);
                 message.setText(getTranslate(MESSAGE_IMAGE_STYLE_WRITE));
                 checkPaginationCallback(query, chatId, message.getMessageId());
                 isPagination = true;
             }
             if (currentStyle != null && width == null) {
                 isPagination = false;
+                currentPage = 1;
                 sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
                 sendMessage(getTranslate(MESSAGE_IMAGE_WIDTH_WRITE), chatId);
                 isWidth = true;
@@ -465,14 +461,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> paginationRow = new ArrayList<>();
         if (currentPage > 1) {
             InlineKeyboardButton previousButton = new InlineKeyboardButton();
-            previousButton.setText("Предыдущий");
-            previousButton.setCallbackData("Предыдущий");
+            previousButton.setText(getTranslate(PAGINATION_PREVIOUS));
+            previousButton.setCallbackData(getTranslate(PAGINATION_PREVIOUS));
             paginationRow.add(previousButton);
         }
         if (currentPage < totalPages) {
             InlineKeyboardButton nextButton = new InlineKeyboardButton();
-            nextButton.setText("Следующий");
-            nextButton.setCallbackData("Следующий");
+            nextButton.setText(getTranslate(PAGINATION_NEXT));
+            nextButton.setCallbackData(getTranslate(PAGINATION_NEXT));
             paginationRow.add(nextButton);
         }
         rows.add(paginationRow);
@@ -483,10 +479,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void checkPaginationCallback(String paginationData, long chatId, int messageId) {
         totalPages = (int) Math.ceil((double) styles.keySet().size() / 9);
-        if (paginationData.equals("Предыдущий")) {
+        if (paginationData.equals(getTranslate(PAGINATION_PREVIOUS))) {
             currentPage -= 1;
         }
-        if (paginationData.equals("Следующий")) {
+        if (paginationData.equals(getTranslate(PAGINATION_NEXT))) {
             currentPage += 1;
         }
         InlineKeyboardMarkup markup = getStyleOptions(styles.keySet());

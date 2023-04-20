@@ -37,4 +37,8 @@ public class TranslationConstants {
     public final static String ERROR_HEIGHT = "error.height";
     public final static String ERROR_WIDTH = "error.width";
 
+    //Pagination
+    public final static String PAGINATION_PREVIOUS = "pagination.previous";
+    public final static String PAGINATION_NEXT = "pagination.next";
+
 }
