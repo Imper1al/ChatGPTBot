@@ -262,8 +262,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if (isCreateAdImage && message.hasPhoto()) {
                 PhotoSize photoSize = message.getPhoto().get(0);
-                InputFile file = saveImage(photoSize.getFilePath());
-                System.out.println(file.getAttachName() + " " + file.getMediaName());
                 String filePath = downloadPhoto(photoSize.getFileId());
                 if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithImage(adminMessage, filePath);
@@ -309,19 +307,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println(e.getMessage());
         }
         return path;
-    }
-
-    private InputFile saveImage(String url) {
-        InputFile image = null;
-        try {
-            if(url != null) {
-                FileUtils.copyURLToFile(new URL(url), new java.io.File("image.png"));
-                image = new InputFile(new java.io.File("image.png"));
-            }
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-        return image;
     }
 
     private void heightAndWeightCheck(String messageText, long chatId) {
