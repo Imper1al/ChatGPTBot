@@ -810,6 +810,5 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.isCreateAdImage = false;
         this.isHandlingMessages = true;
         this.adminMessage = null;
-        this.isAdmin = false;
     }
 }
