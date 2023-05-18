@@ -3,6 +3,7 @@ package org.chatgpt.entities;
 import lombok.*;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Builder
@@ -10,6 +11,7 @@ import javax.persistence.Table;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 @Table(name = "users", schema = "chat-gpt")
 public class User {
 
