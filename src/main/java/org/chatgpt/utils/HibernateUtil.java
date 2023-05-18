@@ -1,5 +1,6 @@
 package org.chatgpt.utils;
 
+import org.chatgpt.entities.User;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
@@ -12,6 +13,7 @@ public class HibernateUtil {
         if (sessionFactory == null) {
             try {
                 Configuration configuration = new Configuration().configure("hibernate.cfg.xml");
+                configuration.addAnnotatedClass(User.class);
                 StandardServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                         .applySettings(configuration.getProperties()).build();
                 sessionFactory = configuration.buildSessionFactory(serviceRegistry);
