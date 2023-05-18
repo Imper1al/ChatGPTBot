@@ -263,9 +263,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println(message.hasDocument());
             System.out.println(message.hasPhoto());
             System.out.println(message.hasEntities());
-            if (isCreateAdImage && message.hasPhoto()) {
-                PhotoSize photoSize = message.getPhoto().get(0);
-                String filePath = downloadPhoto(photoSize.getFileId());
+            System.out.println(message.getPhoto().size());
+            if (isCreateAdImage && message.hasDocument()) {
+                Document document = message.getDocument();
+                String filePath = downloadPhoto(document.getFileId());
                 if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithImage(adminMessage, filePath);
                     resetAdminValues();
@@ -294,7 +295,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.println(fileUrl);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(fileUrl);
-
         try {
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
