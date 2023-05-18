@@ -12,6 +12,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Entity
 @Table(name = "users", schema = "\"chat-gpt\"")
+@SequenceGenerator(name = "user_sequence", sequenceName = "hibernate_sequence", allocationSize = 1)
 public class User {
 
     @Id
