@@ -11,6 +11,7 @@ import org.chatgpt.constants.Constants;
 import org.chatgpt.database.ChatIds;
 import org.chatgpt.utils.PhotoUtils;
 import org.chatgpt.utils.ResourceBundleUtils;
+import org.chatgpt.utils.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -416,7 +417,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(long chatId) {
-        sendMessageWithImage(getTranslate(MESSAGE_START), chatId, START_IMAGE_URL);
+        sendMessageWithImage(StringUtils.addStarsToFirstLine(getTranslate(MESSAGE_START)), chatId, START_IMAGE_URL);
         this.isHandlingImages = false;
         this.isHandlingMessages = true;
     }
