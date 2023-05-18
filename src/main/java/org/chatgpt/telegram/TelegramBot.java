@@ -234,6 +234,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleAdminRequest(long chatId, Message message) {
+        System.out.println(isAdmin + " " + isCreateAd + " " + isCreateAdMessage);
         if (isAdmin && isCreateAd && isCreateAdMessage) {
             adminMessage = message.getText();
             if (!isCreateAdImage) {
@@ -400,8 +401,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleCreateAdCommandMessage(Long chatId) {
         if (isCreateAd) {
-            sendMessage(getTranslate(ADMIN_WRITE_TEXT), chatId);
             isCreateAdMessage = true;
+            isHandlingImages = false;
+            isHandlingMessages = false;
+            sendMessage(getTranslate(ADMIN_WRITE_TEXT), chatId);
         }
     }
 
@@ -415,12 +418,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleMessagesMode(long chatId) {
         isHandlingMessages = true;
         isHandlingImages = false;
+        isCreateAdMessage = false;
         sendMessageWithImage(getTranslate(MESSAGE_MESSAGE), chatId, MESSAGES_IMAGE_URL);
         resetValues();
     }
 
     private void handleImagesMode(long chatId) {
         isHandlingMessages = false;
+        isCreateAdMessage = false;
         isHandlingImages = true;
         isHandlingGPTImages = false;
         isHandlingDreamImages = false;
@@ -469,7 +474,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
-        sendMessage.setReplyMarkup(attributes());
+        if (isAdmin) {
+            sendMessage.setReplyMarkup(adminAttributes());
+        } else {
+            sendMessage.setReplyMarkup(attributes());
+        }
         sendMessage.setParseMode(ParseMode.MARKDOWN);
         try {
             execute(sendMessage);
@@ -495,7 +504,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
-        sendMessage.setReplyMarkup(attributes());
+        if (isAdmin) {
+            sendMessage.setReplyMarkup(adminAttributes());
+        } else {
+            sendMessage.setReplyMarkup(attributes());
+        }
         sendMessage.setParseMode(ParseMode.MARKDOWN);
         Message execute = new Message();
         try {
@@ -535,7 +548,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             SendPhoto sendPhoto = new SendPhoto();
             sendPhoto.setChatId(chatId);
             sendPhoto.setPhoto(image);
-            sendPhoto.setReplyMarkup(attributes());
+            if (isAdmin) {
+                sendPhoto.setReplyMarkup(adminAttributes());
+            } else {
+                sendPhoto.setReplyMarkup(attributes());
+            }
             sendPhoto.setParseMode(ParseMode.MARKDOWN);
             try {
                 execute(sendPhoto);
@@ -549,7 +566,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
         sendPhoto.setPhoto(image);
-        sendPhoto.setReplyMarkup(attributes());
+        if (isAdmin) {
+            sendPhoto.setReplyMarkup(adminAttributes());
+        } else {
+            sendPhoto.setReplyMarkup(attributes());
+        }
         sendPhoto.setParseMode(ParseMode.MARKDOWN);
         try {
             execute(sendPhoto);
@@ -575,6 +596,33 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         keyboard.add(row);
         keyboard.add(row2);
+        replyKeyboardMarkup.setKeyboard(keyboard);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    private ReplyKeyboardMarkup adminAttributes() {
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        List<KeyboardRow> keyboard = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
+        KeyboardRow row2 = new KeyboardRow();
+        KeyboardRow row3 = new KeyboardRow();
+        int i = 0;
+        for (String command : messageHandlers.keySet()) {
+            if (i > 0 && i < 3) {
+                row.add(command);
+            }
+            if (i > 2 && i < 5) {
+                row2.add(command);
+            }
+            if (i > 4) {
+                row3.add(command);
+            }
+            i++;
+        }
+        keyboard.add(row);
+        keyboard.add(row2);
+        keyboard.add(row3);
         replyKeyboardMarkup.setKeyboard(keyboard);
         replyKeyboardMarkup.setResizeKeyboard(true);
         return replyKeyboardMarkup;
