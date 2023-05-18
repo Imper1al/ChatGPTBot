@@ -75,4 +75,8 @@ public class ChatIds {
     public Set<Long> getIds() {
         return ids;
     }
+
+    public String userCounter() {
+        return "Количество пользователей бота: " + ids.size();
+    }
 }

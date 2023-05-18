@@ -53,5 +53,6 @@ public class TranslationConstants {
 
     public final static String ADMIN_WRITE_TEXT = "admin.write.text";
     public final static String ADMIN_WRITE_IMAGE = "admin.write.image";
+    public final static String COMMAND_USER_COUNTER = "admin.user.counter";
 
 }

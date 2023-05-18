@@ -103,7 +103,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
-            chatIds.addIdToDatabase(chatId);
             String query = callbackQuery.getData();
             if (isAdmin && isCreateAd) {
                 currentAdminStrategy = query;
@@ -125,6 +124,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             long chatId = message.getChatId();
+            System.out.println("chatId: " +  chatId);
             chatIds.addIdToDatabase(chatId);
             String messageText = message.getText();
             User user = message.getFrom();
@@ -152,6 +152,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (user.getUserName().equals(ADMIN)) {
                         isAdmin = true;
                         messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
                     }
 
                     Consumer<Long> defaultHandler = (ch) -> {
@@ -236,16 +237,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (isAdmin && isCreateAd && isCreateAdMessage) {
             adminMessage = message.getText();
             if (!isCreateAdImage) {
-                if (ADMIN_COMMAND_WITHOUT_IMAGE.equals(currentAdminStrategy)) {
+                if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithText(adminMessage);
                     resetAdminValues();
                 }
-                if (ADMIN_COMMAND_WITHOUT_IMAGE_TEST.equals(currentAdminStrategy)) {
+                if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE_TEST).equals(currentAdminStrategy)) {
                     createAdWithTextTest(adminMessage, chatId);
                     resetAdminValues();
                 }
             }
-            if (!isCreateAdImage && (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy) || ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy))) {
+            if (!isCreateAdImage && (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy) || getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy))) {
                 handleCreateAdCommandImage(chatId);
             }
             if (isCreateAdImage && message.hasPhoto()) {
@@ -256,11 +257,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 try {
                     File file = execute(getFile);
                     String filePath = file.getFilePath();
-                    if (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy)) {
+                    if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                         createAdWithImage(adminMessage, filePath);
                         resetAdminValues();
                     }
-                    if (ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy)) {
+                    if (getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy)) {
                         createAdWithImageTest(adminMessage, filePath, chatId);
                         resetAdminValues();
                     }
@@ -393,16 +394,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage(getAdminOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
     }
 
+    private void handleUserCounter(long chatId) {
+        sendMessage(chatIds.userCounter(), chatId);
+    }
+
     private void handleCreateAdCommandMessage(Long chatId) {
         if (isCreateAd) {
-            sendMessage("Введите рекламное сообщение: ", chatId);
+            sendMessage(getTranslate(ADMIN_WRITE_TEXT), chatId);
             isCreateAdMessage = true;
         }
     }
 
     private void handleCreateAdCommandImage(Long chatId) {
         if (isCreateAd) {
-            sendMessage("Введите рекламную картинку: ", chatId);
+            sendMessage(getTranslate(ADMIN_WRITE_IMAGE), chatId);
             isCreateAdImage = true;
         }
     }
