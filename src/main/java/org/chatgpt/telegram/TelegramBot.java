@@ -81,29 +81,30 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if(update.hasMessage() && tehrab) {
-            Message message = update.getMessage();
-            if(!message.getFrom().getUserName().equals(ADMIN)) {
-                sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
+//        if (tehrab) {
+//            if (update.hasMessage()) {
+//                Message message = update.getMessage();
+//                if (!message.getFrom().getUserName().equals(ADMIN)) {
+//                    sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
+//                }
+//            } else if (update.hasCallbackQuery()) {
+//                Message message = update.getCallbackQuery().getMessage();
+//                if (!message.getFrom().getUserName().equals(ADMIN)) {
+//                    sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
+//                }
+//            }
+//        }
+        if (update.hasCallbackQuery()) {
+            CallbackQuery callbackQuery = update.getCallbackQuery();
+            long chatId = callbackQuery.getMessage().getChatId();
+            String query = callbackQuery.getData();
+            if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
+                checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
             }
-        }
-        else if(update.hasCallbackQuery() && tehrab) {
-            Message message = update.getCallbackQuery().getMessage();
-            if(!message.getFrom().getUserName().equals(ADMIN)) {
-                sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
+            if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
+                isHandlingDreamImages = true;
+                handleDreamImages(query, chatId, callbackQuery.getMessage());
             }
-        } else {
-            if (update.hasCallbackQuery()) {
-                CallbackQuery callbackQuery = update.getCallbackQuery();
-                long chatId = callbackQuery.getMessage().getChatId();
-                String query = callbackQuery.getData();
-                if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
-                    checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
-                }
-                if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
-                    isHandlingDreamImages = true;
-                    handleDreamImages(query, chatId, callbackQuery.getMessage());
-                }
                 if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
                     isHandlingGPTImages = true;
                     handleGPTImages(query, chatId);
@@ -144,7 +145,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
-    }
 
     private void errorHandler(long chatId) {
         if(!dreamApi.getErrors().isEmpty()) {
