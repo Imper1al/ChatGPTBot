@@ -1,11 +1,13 @@
 package org.chatgpt.telegram;
 
-import org.chatgpt.Main;
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
 import org.chatgpt.constants.Constants;
+import org.chatgpt.database.ChatIds;
+import org.chatgpt.utils.PhotoUtil;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -18,9 +20,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -38,7 +37,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isHeight = false;
     private boolean isDescription = false;
     private boolean isPagination = false;
+    private boolean isCreateAd = false;
+    private boolean isCreateAdImage = false;
+    private boolean isCreateAdMessage = false;
     private boolean tehrab = true;
+    private boolean isAdmin = false;
+    private String currentAdminStrategy;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -46,24 +50,29 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
+    private final ChatIds chatIds;
     Map<String, Consumer<Long>> messageHandlers;
     Map<Long, List<String>> context;
     private final DreamApi dreamApi;
     Map<String, String> styles;
+    List<String> adminStrategy;
     private String currentStyle;
     private String width;
     private String height;
     private int currentPage = 1;
     private int totalPages;
+    private String adminMessage;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
         this.botConfig = botConfig;
         this.chatGPTApi = new ChatGPTApi();
+        this.chatIds = new ChatIds();
         this.messageHandlers = new LinkedHashMap<>();
         this.context = new HashMap<>();
         this.dreamApi = new DreamApi();
         initSettingsList();
+        initAdminStrategyList();
     }
 
     private void initSettingsList() {
@@ -76,6 +85,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void initAdminStrategyList() {
+        adminStrategy = new ArrayList<>();
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE_TEST));
+    }
+
     @Override
     public String getBotUsername() {
         return botConfig.getBotName();
@@ -83,23 +100,17 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-//        if (tehrab) {
-//            if (update.hasMessage()) {
-//                Message message = update.getMessage();
-//                if (!message.getFrom().getUserName().equals(ADMIN)) {
-//                    sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
-//                }
-//            } else if (update.hasCallbackQuery()) {
-//                Message message = update.getCallbackQuery().getMessage();
-//                if (!message.getFrom().getUserName().equals(ADMIN)) {
-//                    sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
-//                }
-//            }
-//        }
         if (update.hasCallbackQuery()) {
             CallbackQuery callbackQuery = update.getCallbackQuery();
             long chatId = callbackQuery.getMessage().getChatId();
+            chatIds.addIdToDatabase(chatId);
             String query = callbackQuery.getData();
+            if (isAdmin && isCreateAd) {
+                currentAdminStrategy = query;
+                if (!isCreateAdMessage) {
+                    handleCreateAdCommandMessage(chatId);
+                }
+            }
             if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
                 checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
             }
@@ -107,44 +118,92 @@ public class TelegramBot extends TelegramLongPollingBot {
                 isHandlingDreamImages = true;
                 handleDreamImages(query, chatId, callbackQuery.getMessage());
             }
-                if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
-                    isHandlingGPTImages = true;
-                    handleGPTImages(query, chatId);
+            if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
+                isHandlingGPTImages = true;
+                handleGPTImages(query, chatId);
+            }
+        } else if (update.hasMessage()) {
+            Message message = update.getMessage();
+            long chatId = message.getChatId();
+            chatIds.addIdToDatabase(chatId);
+            String messageText = message.getText();
+            User user = message.getFrom();
+
+            if (tehrab) {
+                if (!user.getUserName().equals(ADMIN)) {
+                    sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
                 }
-            } else if (update.hasMessage()) {
-                Message message = update.getMessage();
-                long chatId = message.getChatId();
-                String messageText = message.getText();
-                User user = message.getFrom();
+            }
 
-                if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
-                    this.messageHandlers = new LinkedHashMap<>();
-                    ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
+            if (isAdmin && isCreateAd && isCreateAdMessage) {
+                adminMessage = messageText;
+                if (!isCreateAdImage && !(ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy) || ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy))) {
+                    if (ADMIN_COMMAND_WITHOUT_IMAGE.equals(currentAdminStrategy)) {
+                        createAdWithText(adminMessage);
+                        resetAdminValues();
+                    }
+                    if (ADMIN_COMMAND_WITHOUT_IMAGE_TEST.equals(currentAdminStrategy)) {
+                        createAdWithTextTest(adminMessage, chatId);
+                        resetAdminValues();
+                    }
                 }
+                if (!isCreateAdImage && (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy) || ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy))) {
+                    handleCreateAdCommandImage(chatId);
+                }
+                if (isCreateAdImage && update.getMessage().hasPhoto()) {
+                    PhotoSize photoSize = update.getMessage().getPhoto().get(0);
+                    GetFile getFile = new GetFile();
+                    getFile.setFileId(photoSize.getFileId());
 
-                System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
-                        + ": " + messageText);
-
-                if (messageText != null) {
-                    messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_ABOUT), (ch) -> handleAboutCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
-
-                    Consumer<Long> defaultHandler = (ch) -> {
-                        if (!messageHandlers.containsKey(messageText) && message.hasText()) {
-                            if (isHandlingMessages) {
-                                handleMessagesRequest(chatId, messageText);
-                            } else if (isHandlingImages) {
-                                handleImagesRequest(chatId, messageText);
-                            }
+                    try {
+                        File file = execute(getFile);
+                        String filePath = file.getFilePath();
+                        if (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy)) {
+                            createAdWithImage(adminMessage, filePath);
+                            resetAdminValues();
                         }
-                    };
-
-                    messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
+                        if (ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy)) {
+                            createAdWithImageTest(adminMessage, filePath, chatId);
+                            resetAdminValues();
+                        }
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 }
+            }
+
+            if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
+                this.messageHandlers = new LinkedHashMap<>();
+                ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
+            }
+
+            System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
+                    + ": " + messageText);
+
+            if (messageText != null) {
+                messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
+                messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
+                messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
+                messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
+                messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
+                messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                if (user.getUserName().equals(ADMIN)) {
+                    isAdmin = true;
+                    messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
+                }
+
+                Consumer<Long> defaultHandler = (ch) -> {
+                    if (!messageHandlers.containsKey(messageText) && message.hasText()) {
+                        if (isHandlingMessages) {
+                            handleMessagesRequest(chatId, messageText);
+                        } else if (isHandlingImages) {
+                            handleImagesRequest(chatId, messageText);
+                        }
+                    }
+                };
+
+                messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
+            }
             }
         }
 
@@ -192,10 +251,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     isWidth = false;
                     Message message = sendWriteMessage(MESSAGE_IMAGE_DREAM_WRITE, chatId);
                     sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
+                    deleteMessage(message, chatId);
                     if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
                         sendMessage(getTranslate(ERROR_GENERATION), chatId);
                     }
-                    deleteMessage(message, chatId);
                     resetValues();
                 }catch (Exception e) {
                     System.out.println(e.getMessage());
@@ -311,14 +370,34 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void handleAboutCommand(long chatId) {
-        sendMessage(getTranslate(MESSAGE_ABOUT), chatId);
+    private void handleCooperationCommand(long chatId) {
+        sendMessageWithImage(getTranslate(MESSAGE_COOPERATION), chatId, COOPERATION_IMAGE_URL);
     }
 
     private void handleStartCommand(long chatId) {
         sendMessageWithImage(getTranslate(MESSAGE_START), chatId, START_IMAGE_URL);
         this.isHandlingImages = false;
         this.isHandlingMessages = true;
+    }
+
+    private void handleCreateAdCommand(long chatId) {
+        isCreateAd = true;
+        isHandlingMessages = false;
+        sendMessage(getOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
+    }
+
+    private void handleCreateAdCommandMessage(Long chatId) {
+        if (isCreateAd) {
+            sendMessage("Введите рекламное сообщение: ", chatId);
+            isCreateAdMessage = true;
+        }
+    }
+
+    private void handleCreateAdCommandImage(Long chatId) {
+        if (isCreateAd) {
+            sendMessage("Введите рекламную картинку: ", chatId);
+            isCreateAdImage = true;
+        }
     }
 
     private void handleMessagesMode(long chatId) {
@@ -388,11 +467,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendMessageWithImage(String message, long chatId, String imageUrl) {
-        Path imageFilePath = Paths.get(imageUrl);
         SendPhoto sendPhoto = SendPhoto.builder()
                 .caption(message)
                 .chatId(chatId)
-                .photo(new InputFile(imageFilePath.toFile()))
+                .photo(PhotoUtil.getInputFileByPath(imageUrl))
                 .build();
         try {
             execute(sendPhoto);
@@ -566,11 +644,42 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void createAdWithImage(String message, String photoPath) {
+        Set<Long> ids = chatIds.getIds();
+        for (Long id : ids) {
+            sendMessageWithImage(message, id, photoPath);
+        }
+
+    }
+
+    private void createAdWithText(String message) {
+        Set<Long> ids = chatIds.getIds();
+        for (Long id : ids) {
+            sendMessage(message, id);
+        }
+    }
+
+    private void createAdWithImageTest(String message, String photoPath, Long chatId) {
+        sendMessageWithImage(message, chatId, photoPath);
+    }
+
+    private void createAdWithTextTest(String message, Long chatId) {
+        sendMessage(message, chatId);
+    }
+
     private void resetValues() {
         this.quantity = null;
         this.size = null;
         this.currentStyle = null;
         this.width = null;
         this.height = null;
+    }
+
+    private void resetAdminValues() {
+        this.isCreateAdMessage = false;
+        this.isCreateAd = false;
+        this.isCreateAdImage = false;
+        this.isHandlingMessages = true;
+        this.adminMessage = null;
     }
 }

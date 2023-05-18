@@ -7,8 +7,9 @@ public class TranslationConstants {
     public final static String COMMAND_MESSAGE = "commands.message";
     public final static String COMMAND_IMAGE = "commands.image";
     public final static String COMMAND_DONATE = "commands.donate";
-    public final static String COMMAND_ABOUT = "commands.about";
+    public final static String COMMAND_COOPERATION = "commands.cooperation";
     public final static String COMMAND_REFRESH = "commands.refresh";
+    public final static String COMMAND_CREATE_AD = "commands.ad";
 
     //MESSAGES
     public final static String MESSAGE_START = "message.start";
@@ -28,7 +29,7 @@ public class TranslationConstants {
     public final static String MESSAGE_DONATE_BEFORE = "message.donate.before.link";
     public final static String MESSAGE_DONATE_LINKS = "message.donate.links";
     public final static String MESSAGE_DONATE_AFTER = "message.donate.after.link";
-    public final static String MESSAGE_ABOUT = "message.about";
+    public final static String MESSAGE_COOPERATION = "message.cooperation";
     public final static String MESSAGE_REFRESH = "message.refresh";
 
     //ERRORS
@@ -43,5 +44,14 @@ public class TranslationConstants {
 
     //Engineering works
     public final static String TEHWORKS_MESSAGE = "engineering.works";
+
+    //Admin
+    public final static String ADMIN_COMMAND_WITH_IMAGE = "admin.command.with.image";
+    public final static String ADMIN_COMMAND_WITHOUT_IMAGE = "admin.command.without.image";
+    public final static String ADMIN_COMMAND_WITH_IMAGE_TEST = "admin.command.with.image.test";
+    public final static String ADMIN_COMMAND_WITHOUT_IMAGE_TEST = "admin.command.without.image.test";
+
+    public final static String ADMIN_WRITE_TEXT = "admin.write.text";
+    public final static String ADMIN_WRITE_IMAGE = "admin.write.image";
 
 }
