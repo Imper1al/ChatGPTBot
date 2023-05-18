@@ -82,7 +82,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.messageHandlers = new LinkedHashMap<>();
         this.context = new HashMap<>();
         this.dreamApi = new DreamApi();
+        System.out.println("Before initRepo");
         this.userRepository = new UserRepositoryImpl(HibernateUtil.getSessionFactory());
+        System.out.println("After initRepo");
         initSettingsList();
         initAdminStrategyList();
     }
