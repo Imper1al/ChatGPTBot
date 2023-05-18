@@ -233,7 +233,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleAdminRequest(long chatId, Message message) {
-        System.out.println(isAdmin + " " + isCreateAd + " " + isCreateAdMessage);
         if (isAdmin && isCreateAd && isCreateAdMessage) {
             adminMessage = message.getText();
             if (!isCreateAdImage) {
@@ -250,6 +249,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 handleCreateAdCommandImage(chatId);
             }
             if (isCreateAdImage && message.hasPhoto()) {
+                System.out.println("Start photo set");
                 PhotoSize photoSize = message.getPhoto().get(0);
                 GetFile getFile = new GetFile();
                 getFile.setFileId(photoSize.getFileId());
@@ -257,6 +257,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 try {
                     File file = execute(getFile);
                     String filePath = file.getFilePath();
+                    System.out.println("filePath: " + filePath);
                     if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                         createAdWithImage(adminMessage, filePath);
                         resetAdminValues();
