@@ -544,6 +544,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .chatId(chatId)
                 .photo(PhotoUtils.getInputFileByPath(imageUrl))
                 .parseMode(ParseMode.MARKDOWN)
+                .replyMarkup(attributes())
                 .build();
         try {
             execute(sendPhoto);
