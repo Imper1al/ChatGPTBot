@@ -63,6 +63,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private final UserRepository userRepository;
     Map<String, Consumer<Long>> messageHandlers;
+    Map<String, Consumer<Long>> adminMessageHandlers;
     Map<Long, List<String>> context;
     private final DreamApi dreamApi;
     private Map<String, String> styles;
@@ -80,6 +81,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.botConfig = botConfig;
         this.chatGPTApi = new ChatGPTApi();
         this.messageHandlers = new LinkedHashMap<>();
+        this.adminMessageHandlers = new LinkedHashMap<>();
         this.context = new HashMap<>();
         this.dreamApi = new DreamApi();
         this.userRepository = new UserRepositoryImpl(HibernateUtil.getSessionFactory());
@@ -168,29 +170,24 @@ public class TelegramBot extends TelegramLongPollingBot {
                         + ": " + messageText);
 
                 if (messageText != null) {
-                    if(!messageHandlers.isEmpty()) {
-                        messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
-                        if (user.getUserName().equals(ADMIN)) {
-                            isAdmin = true;
-                            messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
-                            messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
-                        }
+                    messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                    if (user.getUserName().equals(ADMIN)) {
+                        isAdmin = true;
+                        adminMessageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
+                        adminMessageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
                     }
-
                     Consumer<Long> defaultHandler = (ch) -> {
                         if (!messageHandlers.containsKey(messageText)) {
                             if (isHandlingMessages) {
                                 handleMessagesRequest(chatId, messageText);
-                            }
-                            else if (isHandlingImages) {
+                            } else if (isHandlingImages) {
                                 handleImagesRequest(chatId, messageText);
-                            }
-                            else if(isCreateAd) {
+                            } else if (isAdmin && isCreateAd) {
                                 handleAdminRequest(chatId, message);
                             }
                         }
@@ -653,27 +650,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private ReplyKeyboardMarkup adminAttributes() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        ReplyKeyboardMarkup replyKeyboardMarkup = attributes();
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
-        KeyboardRow row2 = new KeyboardRow();
-        KeyboardRow row3 = new KeyboardRow();
-        int i = 0;
-        for (String command : messageHandlers.keySet()) {
-            if (i > 0 && i < 3) {
-                row.add(command);
-            }
-            if (i > 2 && i < 5) {
-                row2.add(command);
-            }
-            if (i > 4) {
-                row3.add(command);
-            }
-            i++;
+        for (String command : adminMessageHandlers.keySet()) {
+            row.add(command);
         }
         keyboard.add(row);
-        keyboard.add(row2);
-        keyboard.add(row3);
         replyKeyboardMarkup.setKeyboard(keyboard);
         replyKeyboardMarkup.setResizeKeyboard(true);
         return replyKeyboardMarkup;
