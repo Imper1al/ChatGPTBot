@@ -248,6 +248,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (!isCreateAdImage && (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy) || getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy))) {
                 handleCreateAdCommandImage(chatId);
             }
+            System.out.println("Has photo: " + message.hasPhoto());
+            System.out.println("Chat photo:" + message.getChat().getPhoto());
             if (isCreateAdImage && message.hasPhoto()) {
                 System.out.println("Start photo set");
                 PhotoSize photoSize = message.getPhoto().get(0);
@@ -392,6 +394,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCreateAdCommand(long chatId) {
         isCreateAd = true;
         isHandlingMessages = false;
+        isHandlingImages = false;
         sendMessage(getAdminOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
     }
 
@@ -402,16 +405,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCreateAdCommandMessage(Long chatId) {
         if (isCreateAd) {
             isCreateAdMessage = true;
-            isHandlingImages = false;
-            isHandlingMessages = false;
             sendMessage(getTranslate(ADMIN_WRITE_TEXT), chatId);
         }
     }
 
     private void handleCreateAdCommandImage(Long chatId) {
         if (isCreateAd) {
-            sendMessage(getTranslate(ADMIN_WRITE_IMAGE), chatId);
             isCreateAdImage = true;
+            sendMessage(getTranslate(ADMIN_WRITE_IMAGE), chatId);
         }
     }
 
