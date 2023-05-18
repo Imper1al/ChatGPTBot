@@ -290,10 +290,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         System.out.println(fileUrl);
         HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpPost httpPost = new HttpPost(fileUrl);
+        HttpGet httpGet = new HttpGet(fileUrl);
 
         try {
-            HttpResponse response = httpClient.execute(httpPost);
+            HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
             System.out.println(response);
             System.out.println(response.getEntity());
