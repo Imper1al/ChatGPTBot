@@ -82,9 +82,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.messageHandlers = new LinkedHashMap<>();
         this.context = new HashMap<>();
         this.dreamApi = new DreamApi();
-        System.out.println("Before initRepo");
         this.userRepository = new UserRepositoryImpl(HibernateUtil.getSessionFactory());
-        System.out.println("After initRepo");
         initSettingsList();
         initAdminStrategyList();
     }
@@ -114,7 +112,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void addNewUser(User telegramUser, String chatId) {
         org.chatgpt.entities.User user = userRepository.selectUserByChatId(chatId);
-        System.out.println(user);
         if (user == null) {
             org.chatgpt.entities.User newUser = org.chatgpt.entities.User.builder()
                     .firstName(telegramUser.getFirstName())
@@ -295,7 +292,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String downloadPhoto(String fileId) {
-        String path = "src/main/resources/database/tempImage.jpg";
         GetFile getFile = new GetFile();
         getFile.setFileId(fileId);
         File file = new File();
@@ -304,7 +300,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             System.out.println(e.getMessage());
         }
-
+        String path = "src/main/resources/database/" + file.getFilePath().split("/")[1] + ".png";
+        System.out.println(path);
         String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath();
 
         HttpClient httpClient = HttpClientBuilder.create().build();
