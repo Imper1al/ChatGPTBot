@@ -1,5 +1,6 @@
 package org.chatgpt.telegram;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -27,6 +28,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -261,6 +263,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (isCreateAdImage && message.hasPhoto()) {
                 PhotoSize photoSize = message.getPhoto().get(0);
                 String filePath = downloadPhoto(photoSize.getFileId());
+                InputFile file = saveImage(photoSize.getFilePath());
+                System.out.println(file.getAttachName() + " " + file.getMediaName());
                 if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithImage(adminMessage, filePath);
                     resetAdminValues();
@@ -283,6 +287,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             System.out.println(e.getMessage());
         }
+        System.out.println("tt: "+file.getFilePath());
 
         String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath().substring(1);
 
@@ -293,6 +298,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
             System.out.println(response);
+            System.out.println(response.getEntity());
 
             if (entity != null) {
                 try (FileOutputStream outputStream = new FileOutputStream(path)) {
@@ -303,6 +309,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println(e.getMessage());
         }
         return path;
+    }
+
+    private InputFile saveImage(String url) {
+        InputFile image = null;
+        try {
+            if(url != null) {
+                FileUtils.copyURLToFile(new URL(url), new java.io.File("image.png"));
+                image = new InputFile(new java.io.File("image.png"));
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return image;
     }
 
     private void heightAndWeightCheck(String messageText, long chatId) {
