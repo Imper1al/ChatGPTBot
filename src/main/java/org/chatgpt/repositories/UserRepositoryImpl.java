@@ -23,7 +23,9 @@ public class UserRepositoryImpl implements UserRepository {
         try (Session session = sessionFactory.openSession()) {
             System.out.println("After session");
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            System.out.println("After builder");
             CriteriaQuery<User> query = criteriaBuilder.createQuery(User.class);
+            System.out.println("After query");
             Root<User> root = query.from(User.class);
             System.out.println("After root");
             query.select(root).where(criteriaBuilder.equal(root.get("chatId"), chatId));
