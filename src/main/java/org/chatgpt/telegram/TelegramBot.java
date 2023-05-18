@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 import static org.chatgpt.constants.Constants.*;
 import static org.chatgpt.constants.TranslationConstants.*;
 import static org.chatgpt.utils.ResourceBundleUtils.*;
+import static org.chatgpt.utils.StringUtils.*;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
@@ -140,7 +141,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             User user = message.getFrom();
 
             if (tehrab && !user.getUserName().equals(ADMIN)) {
-                sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
+                sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE)), message.getChatId(), TEHRAB_IMAGE_URL);
             }
             if (!tehrab || (tehrab && user.getUserName().equals(ADMIN))) {
 
@@ -417,7 +418,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(long chatId) {
-        sendMessageWithImage(StringUtils.addStarsToFirstLine(getTranslate(MESSAGE_START)), chatId, START_IMAGE_URL);
+        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_START)), chatId, START_IMAGE_URL);
         this.isHandlingImages = false;
         this.isHandlingMessages = true;
     }
@@ -451,7 +452,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         isHandlingMessages = true;
         isHandlingImages = false;
         isCreateAdMessage = false;
-        sendMessageWithImage(getTranslate(MESSAGE_MESSAGE), chatId, MESSAGES_IMAGE_URL);
+        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_MESSAGE)), chatId, MESSAGES_IMAGE_URL);
         resetValues();
     }
 
@@ -461,7 +462,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         isHandlingImages = true;
         isHandlingGPTImages = false;
         isHandlingDreamImages = false;
-        sendMessageWithImage(getTranslate(MESSAGE_IMAGE), chatId, IMAGES_IMAGE_URL);
+        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_IMAGE)), chatId, IMAGES_IMAGE_URL);
         resetValues();
         handleImageStrategy(chatId);
     }
