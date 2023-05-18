@@ -38,8 +38,11 @@ public class UserRepositoryImpl implements UserRepository {
     public void saveUser(User user) {
         System.out.println("Before Save User");
         try (Session session = sessionFactory.openSession()) {
+            System.out.println("Before transaction");
             session.beginTransaction();
+            System.out.println("Before save");
             session.saveOrUpdate(user);
+            System.out.println("Before commit");
             session.getTransaction().commit();
             System.out.println("After Save User");
         }
