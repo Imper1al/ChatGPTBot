@@ -19,22 +19,25 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public User selectUserByChatId(String chatId) {
+        System.out.println("Before Select User");
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<User> query = criteriaBuilder.createQuery(User.class);
             Root<User> root = query.from(User.class);
             query.select(root).where(criteriaBuilder.equal(root.get("chatId"), chatId));
-
+            System.out.println("After Select User");
             return session.createQuery(query).uniqueResult();
         }
     }
 
     @Override
     public void saveUser(User user) {
+        System.out.println("Before Save User");
         try (Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             session.saveOrUpdate(user);
             session.getTransaction().commit();
+            System.out.println("After Save User");
         }
     }
 

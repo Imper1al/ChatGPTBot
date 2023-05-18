@@ -50,7 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isCreateAd = false;
     private boolean isCreateAdImage = false;
     private boolean isCreateAdMessage = false;
-    private boolean tehrab = true;
+    private final boolean tehrab = true;
     private boolean isAdmin = false;
     private String currentAdminStrategy;
     private String quantity;
@@ -61,7 +61,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
     Map<String, Consumer<Long>> messageHandlers;
     Map<Long, List<String>> context;
     private final DreamApi dreamApi;
@@ -114,6 +114,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void addNewUser(User telegramUser, String chatId) {
         org.chatgpt.entities.User user = userRepository.selectUserByChatId(chatId);
+        System.out.println(user);
         if (user == null) {
             org.chatgpt.entities.User newUser = org.chatgpt.entities.User.builder()
                     .firstName(telegramUser.getFirstName())
