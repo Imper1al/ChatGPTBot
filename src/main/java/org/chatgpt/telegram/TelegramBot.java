@@ -300,8 +300,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             System.out.println(e.getMessage());
         }
-        String path = "src/main/resources/database/" + file.getFilePath().split("/")[1] + ".png";
-        System.out.println(path);
+        String path = "src/main/resources/database/" + file.getFilePath().split("/")[1];
         String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath();
 
         HttpClient httpClient = HttpClientBuilder.create().build();
