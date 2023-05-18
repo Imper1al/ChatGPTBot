@@ -21,9 +21,11 @@ public class UserRepositoryImpl implements UserRepository {
     public User selectUserByChatId(String chatId) {
         System.out.println("Before Select User");
         try (Session session = sessionFactory.openSession()) {
+            System.out.println("After session");
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<User> query = criteriaBuilder.createQuery(User.class);
             Root<User> root = query.from(User.class);
+            System.out.println("After root");
             query.select(root).where(criteriaBuilder.equal(root.get("chatId"), chatId));
             System.out.println("After Select User");
             return session.createQuery(query).uniqueResult();
