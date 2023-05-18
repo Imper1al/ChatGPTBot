@@ -158,7 +158,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     Consumer<Long> defaultHandler = (ch) -> {
-                        if (!messageHandlers.containsKey(messageText) && message.hasText()) {
+                        if (!messageHandlers.containsKey(messageText)) {
                             if (isHandlingMessages) {
                                 handleMessagesRequest(chatId, messageText);
                             }
