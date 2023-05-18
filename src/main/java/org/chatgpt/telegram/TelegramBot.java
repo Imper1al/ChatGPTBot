@@ -168,16 +168,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                         + ": " + messageText);
 
                 if (messageText != null) {
-                    messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
-                    if (user.getUserName().equals(ADMIN)) {
-                        isAdmin = true;
-                        messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
+                    if(!messageHandlers.isEmpty()) {
+                        messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                        if (user.getUserName().equals(ADMIN)) {
+                            isAdmin = true;
+                            messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
+                            messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
+                        }
                     }
 
                     Consumer<Long> defaultHandler = (ch) -> {
@@ -806,5 +808,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.isCreateAdImage = false;
         this.isHandlingMessages = true;
         this.adminMessage = null;
+        this.isAdmin = false;
     }
 }
