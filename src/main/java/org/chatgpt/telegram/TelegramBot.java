@@ -124,7 +124,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (update.hasMessage()) {
             Message message = update.getMessage();
             long chatId = message.getChatId();
-            System.out.println("chatId: " +  chatId);
             chatIds.addIdToDatabase(chatId);
             String messageText = message.getText();
             User user = message.getFrom();
@@ -163,7 +162,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             else if (isHandlingImages) {
                                 handleImagesRequest(chatId, messageText);
                             }
-                            else if(isCreateAdImage) {
+                            else if(isCreateAd) {
                                 handleAdminRequest(chatId, message);
                             }
                         }
