@@ -173,7 +173,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleImagesRequest(long chatId, String messageText) {
         if (quantity != null && size != null) {
-            Message message = sendWriteMessage(getTranslate(MESSAGE_IMAGE_GPT_WRITE), chatId);
+            Message message = sendWriteMessage(MESSAGE_IMAGE_GPT_WRITE, chatId);
             sendImage(generateImageAnswerFromChatGPT(messageText, quantity, size), chatId);
             deleteMessage(message, chatId);
             resetValues();
@@ -190,7 +190,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     isDescription = false;
                     isHeight = false;
                     isWidth = false;
-                    Message message = sendWriteMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
+                    Message message = sendWriteMessage(MESSAGE_IMAGE_DREAM_WRITE, chatId);
                     sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
                     if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
                         sendMessage(getTranslate(ERROR_GENERATION), chatId);
@@ -316,7 +316,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleStartCommand(long chatId) {
-        sendMessage(getTranslate(MESSAGE_START), chatId);
+        sendMessageWithImage(getTranslate(MESSAGE_START), chatId, START_IMAGE_URL);
         this.isHandlingImages = false;
         this.isHandlingMessages = true;
     }
