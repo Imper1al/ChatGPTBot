@@ -4,13 +4,12 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
 import org.chatgpt.constants.Constants;
 import org.chatgpt.database.ChatIds;
-import org.chatgpt.utils.PhotoUtil;
+import org.chatgpt.utils.PhotoUtils;
 import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -28,7 +27,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -260,9 +258,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (!isCreateAdImage && (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy) || getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy))) {
                 handleCreateAdCommandImage(chatId);
             }
-            System.out.println(message.hasDocument());
-            System.out.println(message.hasPhoto());
-            System.out.println(message.hasEntities());
             if (isCreateAdImage && message.hasDocument()) {
                 Document document = message.getDocument();
                 String filePath = downloadPhoto(document.getFileId());
@@ -291,14 +286,11 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath();
 
-        System.out.println(fileUrl);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(fileUrl);
         try {
             HttpResponse response = httpClient.execute(httpGet);
             HttpEntity entity = response.getEntity();
-            System.out.println(response);
-            System.out.println(response.getEntity());
 
             if (entity != null) {
                 try (FileOutputStream outputStream = new FileOutputStream(path)) {
@@ -528,7 +520,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendPhoto sendPhoto = SendPhoto.builder()
                 .caption(message)
                 .chatId(chatId)
-                .photo(PhotoUtil.getInputFileByPath(imageUrl))
+                .photo(PhotoUtils.getInputFileByPath(imageUrl))
                 .build();
         try {
             execute(sendPhoto);
@@ -772,6 +764,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void createAdWithImageTest(String message, String photoPath, Long chatId) {
+        System.out.println(message);
         sendMessageWithImage(message, chatId, photoPath);
     }
 

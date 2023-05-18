@@ -4,9 +4,9 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.nio.file.Paths;
 
-public class PhotoUtil {
+public class PhotoUtils {
 
-    public PhotoUtil() {
+    public PhotoUtils() {
     }
 
     public static InputFile getInputFileByPath(String imageUrl) {
