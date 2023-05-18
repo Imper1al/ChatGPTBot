@@ -179,6 +179,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                         messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
                         messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
                     }
+                    if(!isAdmin && (messageHandlers.containsKey(getTranslate(COMMAND_CREATE_AD)) || messageHandlers.containsKey(COMMAND_USER_COUNTER))) {
+                        messageHandlers.remove(getTranslate(COMMAND_CREATE_AD));
+                        messageHandlers.remove(getTranslate(COMMAND_USER_COUNTER));
+                    }
 
                     Consumer<Long> defaultHandler = (ch) -> {
                         if (!messageHandlers.containsKey(messageText)) {
