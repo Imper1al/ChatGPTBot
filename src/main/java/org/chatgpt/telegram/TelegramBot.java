@@ -129,82 +129,49 @@ public class TelegramBot extends TelegramLongPollingBot {
             String messageText = message.getText();
             User user = message.getFrom();
 
-            if (tehrab) {
-                if (!user.getUserName().equals(ADMIN)) {
-                    sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
-                }
+            if (tehrab && !user.getUserName().equals(ADMIN)) {
+                sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
             }
+            if (!tehrab || (tehrab && user.getUserName().equals(ADMIN))) {
 
-            if (isAdmin && isCreateAd && isCreateAdMessage) {
-                adminMessage = messageText;
-                if (!isCreateAdImage && !(ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy) || ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy))) {
-                    if (ADMIN_COMMAND_WITHOUT_IMAGE.equals(currentAdminStrategy)) {
-                        createAdWithText(adminMessage);
-                        resetAdminValues();
-                    }
-                    if (ADMIN_COMMAND_WITHOUT_IMAGE_TEST.equals(currentAdminStrategy)) {
-                        createAdWithTextTest(adminMessage, chatId);
-                        resetAdminValues();
-                    }
+                if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
+                    this.messageHandlers = new LinkedHashMap<>();
+                    ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
                 }
-                if (!isCreateAdImage && (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy) || ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy))) {
-                    handleCreateAdCommandImage(chatId);
-                }
-                if (isCreateAdImage && update.getMessage().hasPhoto()) {
-                    PhotoSize photoSize = update.getMessage().getPhoto().get(0);
-                    GetFile getFile = new GetFile();
-                    getFile.setFileId(photoSize.getFileId());
 
-                    try {
-                        File file = execute(getFile);
-                        String filePath = file.getFilePath();
-                        if (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy)) {
-                            createAdWithImage(adminMessage, filePath);
-                            resetAdminValues();
+                System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
+                        + ": " + messageText);
+
+                if (messageText != null) {
+                    messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                    if (user.getUserName().equals(ADMIN)) {
+                        isAdmin = true;
+                        messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
+                    }
+
+                    Consumer<Long> defaultHandler = (ch) -> {
+                        if (!messageHandlers.containsKey(messageText) && message.hasText()) {
+                            if (isHandlingMessages) {
+                                handleMessagesRequest(chatId, messageText);
+                            }
+                            else if (isHandlingImages) {
+                                handleImagesRequest(chatId, messageText);
+                            }
+                            else if(isCreateAdImage) {
+                                handleAdminRequest(chatId, message);
+                            }
                         }
-                        if (ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy)) {
-                            createAdWithImageTest(adminMessage, filePath, chatId);
-                            resetAdminValues();
-                        }
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
+                    };
+
+                    messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
                 }
             }
-
-            if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
-                this.messageHandlers = new LinkedHashMap<>();
-                ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
-            }
-
-            System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
-                    + ": " + messageText);
-
-            if (messageText != null) {
-                messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
-                messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
-                if (user.getUserName().equals(ADMIN)) {
-                    isAdmin = true;
-                    messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
-                }
-
-                Consumer<Long> defaultHandler = (ch) -> {
-                    if (!messageHandlers.containsKey(messageText) && message.hasText()) {
-                        if (isHandlingMessages) {
-                            handleMessagesRequest(chatId, messageText);
-                        } else if (isHandlingImages) {
-                            handleImagesRequest(chatId, messageText);
-                        }
-                    }
-                };
-
-                messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
-            }
-            }
+        }
         }
 
     private void errorHandler(long chatId) {
@@ -262,6 +229,45 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
             heightAndWeightCheck(messageText, chatId);
+        }
+    }
+
+    private void handleAdminRequest(long chatId, Message message) {
+        if (isAdmin && isCreateAd && isCreateAdMessage) {
+            adminMessage = message.getText();
+            if (!isCreateAdImage) {
+                if (ADMIN_COMMAND_WITHOUT_IMAGE.equals(currentAdminStrategy)) {
+                    createAdWithText(adminMessage);
+                    resetAdminValues();
+                }
+                if (ADMIN_COMMAND_WITHOUT_IMAGE_TEST.equals(currentAdminStrategy)) {
+                    createAdWithTextTest(adminMessage, chatId);
+                    resetAdminValues();
+                }
+            }
+            if (!isCreateAdImage && (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy) || ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy))) {
+                handleCreateAdCommandImage(chatId);
+            }
+            if (isCreateAdImage && message.hasPhoto()) {
+                PhotoSize photoSize = message.getPhoto().get(0);
+                GetFile getFile = new GetFile();
+                getFile.setFileId(photoSize.getFileId());
+
+                try {
+                    File file = execute(getFile);
+                    String filePath = file.getFilePath();
+                    if (ADMIN_COMMAND_WITH_IMAGE.equals(currentAdminStrategy)) {
+                        createAdWithImage(adminMessage, filePath);
+                        resetAdminValues();
+                    }
+                    if (ADMIN_COMMAND_WITH_IMAGE_TEST.equals(currentAdminStrategy)) {
+                        createAdWithImageTest(adminMessage, filePath, chatId);
+                        resetAdminValues();
+                    }
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -355,6 +361,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleResetCommand(long chatId) {
         resetValues();
+        resetAdminValues();
         sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
         isHandlingDreamImages = false;
         isHandlingGPTImages = false;
@@ -383,7 +390,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCreateAdCommand(long chatId) {
         isCreateAd = true;
         isHandlingMessages = false;
-        sendMessage(getOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
+        sendMessage(getAdminOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
     }
 
     private void handleCreateAdCommandMessage(Long chatId) {
@@ -578,6 +585,21 @@ public class TelegramBot extends TelegramLongPollingBot {
             row.add(button);
         }
         rows.add(row);
+        InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+        markup.setKeyboard(rows);
+        return markup;
+    }
+
+    private InlineKeyboardMarkup getAdminOptions(List<String> values) {
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        for (String value : values) {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(value);
+            button.setCallbackData(value);
+            row.add(button);
+            rows.add(row);
+        }
         InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
         markup.setKeyboard(rows);
         return markup;
