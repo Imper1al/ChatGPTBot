@@ -14,7 +14,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users", schema = "chat-gpt")
+@Table(name = "users", schema = "\"chat-gpt\"")
 public class User {
 
     @Id
