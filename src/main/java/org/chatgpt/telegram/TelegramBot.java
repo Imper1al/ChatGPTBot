@@ -248,9 +248,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (!isCreateAdImage && (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy) || getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy))) {
                 handleCreateAdCommandImage(chatId);
             }
-            System.out.println("Has photo: " + message.hasPhoto());
-            System.out.println("Chat photo:" + message.getChat().getPhoto());
-            if (isCreateAdImage && message.hasPhoto()) {
+            System.out.println("Has photo: " + message.hasEntities());
+            System.out.println("Chat photo:" + message.getEntities().get(0).getType());
+            boolean hasPhotoEntity = message.getEntities().stream()
+                    .anyMatch(entity -> entity.getType().equals("photo"));
+            System.out.println("Has photo entity: " + hasPhotoEntity);
+            if (isCreateAdImage && message.hasEntities()) {
                 System.out.println("Start photo set");
                 PhotoSize photoSize = message.getPhoto().get(0);
                 GetFile getFile = new GetFile();
