@@ -643,7 +643,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (i > 0 && i < 3) {
                 row.add(command);
             }
-            if (i > 2) {
+            if (i > 2 && i < 6) {
                 row2.add(command);
             }
             i++;
