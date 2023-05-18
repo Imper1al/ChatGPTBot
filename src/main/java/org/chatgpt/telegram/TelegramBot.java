@@ -244,7 +244,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleAdminRequest(long chatId, Message message) {
         if (isAdmin && isCreateAd && isCreateAdMessage) {
-            adminMessage = message.getText();
+            if(message.hasText()) {
+                adminMessage = message.getText();
+            }
             if (!isCreateAdImage) {
                 if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithText(adminMessage);
