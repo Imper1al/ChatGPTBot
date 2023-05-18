@@ -62,6 +62,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private int currentPage = 1;
     private int totalPages;
     private String adminMessage;
+    private String messageText;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
@@ -125,7 +126,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             Message message = update.getMessage();
             long chatId = message.getChatId();
             chatIds.addIdToDatabase(chatId);
-            String messageText = message.getText();
+            if(message.hasText()) {
+                messageText = message.getText();
+            }
             User user = message.getFrom();
 
             if (tehrab && !user.getUserName().equals(ADMIN)) {
