@@ -253,6 +253,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             System.out.println("Has photo: " + message.hasEntities());
             System.out.println("Has photo: " + message.hasPhoto());
+            System.out.println("Has document: " + message.hasDocument());
             if (isCreateAdImage && message.hasEntities()) {
                 System.out.println("Start photo set");
                 PhotoSize photoSize = message.getPhoto().get(0);
