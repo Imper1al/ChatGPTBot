@@ -10,7 +10,7 @@
         <property name="hibernate.connection.username">eolorjysjksjvi</property>
         <property name="hibernate.connection.password">a1ea4b697c9d4d5be87dfcfbed7ce414b1e63f1fa76311f0c81f217af792e8f0</property>
         <!-- Настройки диалекта базы данных -->
-        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQL95Dialect</property>
 
         <!-- Дополнительные настройки Hibernate -->
         <property name="hibernate.show_sql">true</property>
