@@ -19,6 +19,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -386,9 +388,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void sendMessageWithImage(String message, long chatId, String imageUrl) {
-        InputStream inputStream = Main.class.getClassLoader().getResourceAsStream(imageUrl);
-        InputFile inputFile = new InputFile(inputStream, imageUrl);
-        SendPhoto sendPhoto = SendPhoto.builder().caption(message).chatId(chatId).photo(inputFile).build();
+        Path imageFilePath = Paths.get(imageUrl);
+        SendPhoto sendPhoto = SendPhoto.builder()
+                .caption(message)
+                .chatId(chatId)
+                .photo(new InputFile(imageFilePath.toFile()))
+                .build();
         try {
             execute(sendPhoto);
         } catch (TelegramApiException e) {
