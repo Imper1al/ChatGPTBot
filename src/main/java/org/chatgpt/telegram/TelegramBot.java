@@ -523,6 +523,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .caption(message)
                 .chatId(chatId)
                 .photo(PhotoUtils.getInputFileByPath(imageUrl))
+                .parseMode(ParseMode.MARKDOWN)
                 .build();
         try {
             execute(sendPhoto);
@@ -565,6 +566,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
+        sendMessage.setParseMode(ParseMode.MARKDOWN);
         sendMessage.enableMarkdown(true);
         sendMessage.setReplyMarkup(markup);
         try {
