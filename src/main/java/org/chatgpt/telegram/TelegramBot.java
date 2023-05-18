@@ -1,5 +1,6 @@
 package org.chatgpt.telegram;
 
+import org.chatgpt.Main;
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
 import org.chatgpt.constants.Constants;
@@ -8,6 +9,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -16,6 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.InputStream;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -33,6 +36,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isHeight = false;
     private boolean isDescription = false;
     private boolean isPagination = false;
+    private boolean tehrab = true;
     private String quantity;
     private String size;
     private List<String> quantityList;
@@ -77,54 +81,67 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasCallbackQuery()) {
-            CallbackQuery callbackQuery = update.getCallbackQuery();
-            long chatId = callbackQuery.getMessage().getChatId();
-            String query = callbackQuery.getData();
-            if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
-                checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
-            }
-            if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
-                isHandlingDreamImages = true;
-                handleDreamImages(query, chatId, callbackQuery.getMessage());
-            }
-            if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
-                isHandlingGPTImages = true;
-                handleGPTImages(query, chatId);
-            }
-        } else if (update.hasMessage()) {
+        if(update.hasMessage() && tehrab) {
             Message message = update.getMessage();
-            long chatId = message.getChatId();
-            String messageText = message.getText();
-            User user = message.getFrom();
-
-            if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
-                this.messageHandlers = new LinkedHashMap<>();
-                ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
+            if(!message.getFrom().getUserName().equals(ADMIN)) {
+                sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
             }
+        }
+        else if(update.hasCallbackQuery() && tehrab) {
+            Message message = update.getCallbackQuery().getMessage();
+            if(!message.getFrom().getUserName().equals(ADMIN)) {
+                sendMessageWithImage(getTranslate(TEHWORKS_MESSAGE), message.getChatId(), TEHRAB_IMAGE_URL);
+            }
+        } else {
+            if (update.hasCallbackQuery()) {
+                CallbackQuery callbackQuery = update.getCallbackQuery();
+                long chatId = callbackQuery.getMessage().getChatId();
+                String query = callbackQuery.getData();
+                if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
+                    checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
+                }
+                if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
+                    isHandlingDreamImages = true;
+                    handleDreamImages(query, chatId, callbackQuery.getMessage());
+                }
+                if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
+                    isHandlingGPTImages = true;
+                    handleGPTImages(query, chatId);
+                }
+            } else if (update.hasMessage()) {
+                Message message = update.getMessage();
+                long chatId = message.getChatId();
+                String messageText = message.getText();
+                User user = message.getFrom();
 
-            System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
-                    + ": " + messageText);
+                if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
+                    this.messageHandlers = new LinkedHashMap<>();
+                    ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
+                }
 
-            if (messageText != null) {
-                messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                messageHandlers.put(getTranslate(COMMAND_ABOUT), (ch) -> handleAboutCommand(chatId));
-                messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
+                        + ": " + messageText);
 
-                Consumer<Long> defaultHandler = (ch) -> {
-                    if (!messageHandlers.containsKey(messageText) && message.hasText()) {
-                        if (isHandlingMessages) {
-                            handleMessagesRequest(chatId, messageText);
-                        } else if (isHandlingImages) {
-                            handleImagesRequest(chatId, messageText);
+                if (messageText != null) {
+                    messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_ABOUT), (ch) -> handleAboutCommand(chatId));
+                    messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+
+                    Consumer<Long> defaultHandler = (ch) -> {
+                        if (!messageHandlers.containsKey(messageText) && message.hasText()) {
+                            if (isHandlingMessages) {
+                                handleMessagesRequest(chatId, messageText);
+                            } else if (isHandlingImages) {
+                                handleImagesRequest(chatId, messageText);
+                            }
                         }
-                    }
-                };
+                    };
 
-                messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
+                    messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
+                }
             }
         }
     }
@@ -154,8 +171,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleImagesRequest(long chatId, String messageText) {
         if (quantity != null && size != null) {
-            sendMessage(getTranslate(MESSAGE_IMAGE_GPT_WRITE), chatId);
+            Message message = sendWriteMessage(getTranslate(MESSAGE_IMAGE_GPT_WRITE), chatId);
             sendImage(generateImageAnswerFromChatGPT(messageText, quantity, size), chatId);
+            deleteMessage(message, chatId);
             resetValues();
             isHandlingMessages = true;
             isHandlingImages = false;
@@ -170,11 +188,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     isDescription = false;
                     isHeight = false;
                     isWidth = false;
-                    sendMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
+                    Message message = sendWriteMessage(getTranslate(MESSAGE_IMAGE_DREAM_WRITE), chatId);
                     sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
                     if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
                         sendMessage(getTranslate(ERROR_GENERATION), chatId);
                     }
+                    deleteMessage(message, chatId);
                     resetValues();
                 }catch (Exception e) {
                     System.out.println(e.getMessage());
@@ -258,11 +277,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleMessagesRequest(long chatId, String messageText) {
         resetValues();
-        sendMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId);
+        Message message = sendWriteMessage(getTranslate(MESSAGE_MESSAGE_WRITE), chatId);
         String generateMessageAnswerFromChatGPT = generateMessageAnswerFromChatGPT(messageText, chatId);
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
         if (errorHandler(generateMessageAnswerFromChatGPT)) {
             sendMessage(getTranslate(ERROR_TIMEOUT), chatId);
+            deleteMessage(message, chatId);
         } else {
             sendMessage(generateMessageAnswerFromChatGPT, chatId);
         }
@@ -302,7 +322,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleMessagesMode(long chatId) {
         isHandlingMessages = true;
         isHandlingImages = false;
-        sendMessage(getTranslate(MESSAGE_MESSAGE), chatId);
+        sendMessageWithImage(getTranslate(MESSAGE_MESSAGE), chatId, MESSAGES_IMAGE_URL);
         resetValues();
     }
 
@@ -311,7 +331,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         isHandlingImages = true;
         isHandlingGPTImages = false;
         isHandlingDreamImages = false;
-        sendMessage(getTranslate(MESSAGE_IMAGE), chatId);
+        sendMessageWithImage(getTranslate(MESSAGE_IMAGE), chatId, IMAGES_IMAGE_URL);
         resetValues();
         handleImageStrategy(chatId);
     }
@@ -360,6 +380,43 @@ public class TelegramBot extends TelegramLongPollingBot {
         sendMessage.setParseMode(ParseMode.MARKDOWN);
         try {
             execute(sendMessage);
+        } catch (TelegramApiException e) {
+            System.out.println("TelegramApiException: " + e.getMessage());
+        }
+    }
+
+    private void sendMessageWithImage(String message, long chatId, String imageUrl) {
+        InputStream inputStream = Main.class.getClassLoader().getResourceAsStream(imageUrl);
+        InputFile inputFile = new InputFile(inputStream, imageUrl);
+        SendPhoto sendPhoto = SendPhoto.builder().caption(message).chatId(chatId).photo(inputFile).build();
+        try {
+            execute(sendPhoto);
+        } catch (TelegramApiException e) {
+            System.out.println("TelegramApiException: " + e.getMessage());
+        }
+    }
+
+    private Message sendWriteMessage(String message, long chatId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(chatId);
+        sendMessage.setText(message);
+        sendMessage.setReplyMarkup(attributes());
+        sendMessage.setParseMode(ParseMode.MARKDOWN);
+        Message execute = new Message();
+        try {
+            execute = execute(sendMessage);
+        } catch (TelegramApiException e) {
+            System.out.println("TelegramApiException: " + e.getMessage());
+        }
+        return execute;
+    }
+
+    private void deleteMessage(Message message, long chatId) {
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setMessageId(message.getMessageId());
+        deleteMessage.setChatId(chatId);
+        try {
+            execute(deleteMessage);
         } catch (TelegramApiException e) {
             System.out.println("TelegramApiException: " + e.getMessage());
         }
