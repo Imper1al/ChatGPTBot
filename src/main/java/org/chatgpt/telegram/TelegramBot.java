@@ -9,9 +9,10 @@ import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
 import org.chatgpt.constants.Constants;
 import org.chatgpt.repositories.UserRepository;
+import org.chatgpt.repositories.UserRepositoryImpl;
+import org.chatgpt.utils.HibernateUtil;
 import org.chatgpt.utils.PhotoUtils;
 import org.chatgpt.utils.ResourceBundleUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -60,7 +61,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
 
-    @Autowired
     private UserRepository userRepository;
     Map<String, Consumer<Long>> messageHandlers;
     Map<Long, List<String>> context;
@@ -82,6 +82,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.messageHandlers = new LinkedHashMap<>();
         this.context = new HashMap<>();
         this.dreamApi = new DreamApi();
+        this.userRepository = new UserRepositoryImpl(HibernateUtil.getSessionFactory());
         initSettingsList();
         initAdminStrategyList();
     }
@@ -118,7 +119,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .nickname(telegramUser.getUserName())
                     .chatId(chatId)
                     .build();
-            userRepository.save(newUser);
+            userRepository.saveUser(newUser);
         }
     }
 
@@ -444,8 +445,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleUserCounter(long chatId) {
-        List<org.chatgpt.entities.User> users = userRepository.findAll();
-        sendMessage(String.valueOf(users.size()), chatId);
+        List<Long> chatIds = userRepository.selectAllChatIds();
+        sendMessage(String.valueOf(chatIds.size()), chatId);
     }
 
     private void handleCreateAdCommandMessage(Long chatId) {
@@ -769,11 +770,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void createAdWithImage(String message, String photoPath) {
-        List<org.chatgpt.entities.User> users = userRepository.findAll();
-        Set<Long> ids = new HashSet<>();
-        for(org.chatgpt.entities.User user : users) {
-            ids.add(Long.valueOf(user.getChatId()));
-        }
+        List<Long> ids = userRepository.selectAllChatIds();
         for (Long id : ids) {
             sendMessageWithImage(message, id, photoPath);
         }
@@ -781,12 +778,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void createAdWithText(String message) {
-        List<org.chatgpt.entities.User> users = userRepository.findAll();
-        Set<Long> ids = new HashSet<>();
-        for(org.chatgpt.entities.User user : users) {
-            ids.add(Long.valueOf(user.getChatId()));
-        }
-        for (Long id : ids) {
+        List<Long> ids = userRepository.selectAllChatIds();
+        for(Long id : ids) {
             sendMessage(message, id);
         }
     }

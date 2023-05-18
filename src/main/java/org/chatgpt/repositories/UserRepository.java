@@ -1,11 +1,12 @@
 package org.chatgpt.repositories;
 
 import org.chatgpt.entities.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+import java.util.List;
+
+public interface UserRepository {
 
     User selectUserByChatId(String chatId);
+    void saveUser(User user);
+    List<Long> selectAllChatIds();
 }
