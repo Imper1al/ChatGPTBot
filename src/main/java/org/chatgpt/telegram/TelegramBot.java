@@ -168,7 +168,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         + ": " + messageText);
 
                 if (messageText != null) {
-                    messageHandlers = new HashMap<>();
+                    messageHandlers = new LinkedHashMap<>();
                     messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
                     messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
                     messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
