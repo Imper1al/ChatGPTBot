@@ -77,7 +77,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         super(botConfig.getToken());
         this.botConfig = botConfig;
         this.chatGPTApi = new ChatGPTApi();
-        this.chatIds = new ChatIds();
+        this.chatIds = ChatIds.getInstance();
         this.messageHandlers = new LinkedHashMap<>();
         this.context = new HashMap<>();
         this.dreamApi = new DreamApi();
@@ -279,7 +279,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private String downloadPhoto(String fileId) {
-        String path = "src/main/resources/database/tempImage.png";
+        String path = "src/main/resources/database/tempImage.jpg";
         GetFile getFile = new GetFile();
         getFile.setFileId(fileId);
         File file = new File();
