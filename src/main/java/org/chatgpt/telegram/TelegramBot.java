@@ -1,5 +1,10 @@
 package org.chatgpt.telegram;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
 import org.chatgpt.constants.Constants;
@@ -20,6 +25,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -253,7 +260,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if (isCreateAdImage && message.hasPhoto()) {
                 PhotoSize photoSize = message.getPhoto().get(0);
-                String filePath = photoSize.getFilePath();
+                String filePath = downloadPhoto(photoSize.getFileId());
                 if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithImage(adminMessage, filePath);
                     resetAdminValues();
@@ -264,6 +271,37 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
+    }
+
+    private String downloadPhoto(String fileId) {
+        String path = "src/main/resources/database/tempImage.png";
+        GetFile getFile = new GetFile();
+        getFile.setFileId(fileId);
+        File file = new File();
+        try {
+            file = execute(getFile);
+        } catch (TelegramApiException e) {
+            System.out.println(e.getMessage());
+        }
+
+        String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath().substring(1);
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpGet httpGet = new HttpGet(fileUrl);
+
+        try {
+            HttpResponse response = httpClient.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+
+            if (entity != null) {
+                try (FileOutputStream outputStream = new FileOutputStream(path)) {
+                    entity.writeTo(outputStream);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return path;
     }
 
     private void heightAndWeightCheck(String messageText, long chatId) {
