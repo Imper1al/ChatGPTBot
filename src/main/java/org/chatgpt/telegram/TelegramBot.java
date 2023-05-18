@@ -449,7 +449,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleUserCounter(long chatId) {
         List<Long> chatIds = userRepository.selectAllChatIds();
-        sendMessage(String.valueOf(chatIds.size()), chatId);
+        sendMessage("Количество пользователей бота: " + chatIds.size(), chatId);
     }
 
     private void handleCreateAdCommandMessage(Long chatId) {

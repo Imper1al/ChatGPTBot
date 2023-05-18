@@ -8,6 +8,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserRepositoryImpl implements UserRepository {
 
@@ -52,11 +53,15 @@ public class UserRepositoryImpl implements UserRepository {
     public List<Long> selectAllChatIds() {
         try (Session session = sessionFactory.openSession()) {
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
+            CriteriaQuery<String> query = criteriaBuilder.createQuery(String.class);
             Root<User> root = query.from(User.class);
             query.select(root.get("chatId"));
 
-            return session.createQuery(query).getResultList();
+            List<String> chatIds = session.createQuery(query).getResultList();
+
+            return chatIds.stream()
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
         }
     }
 }
