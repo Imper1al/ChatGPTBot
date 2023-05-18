@@ -262,9 +262,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if (isCreateAdImage && message.hasPhoto()) {
                 PhotoSize photoSize = message.getPhoto().get(0);
-                String filePath = downloadPhoto(photoSize.getFileId());
                 InputFile file = saveImage(photoSize.getFilePath());
                 System.out.println(file.getAttachName() + " " + file.getMediaName());
+                String filePath = downloadPhoto(photoSize.getFileId());
                 if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
                     createAdWithImage(adminMessage, filePath);
                     resetAdminValues();
@@ -287,10 +287,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             System.out.println(e.getMessage());
         }
-        System.out.println("tt: "+file.getFilePath());
 
         String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath().substring(1);
 
+        System.out.println(fileUrl);
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpGet httpGet = new HttpGet(fileUrl);
 
