@@ -253,22 +253,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if (isCreateAdImage && message.hasPhoto()) {
                 PhotoSize photoSize = message.getPhoto().get(0);
-                GetFile getFile = new GetFile();
-                getFile.setFileId(photoSize.getFileId());
-
-                try {
-                    File file = execute(getFile);
-                    String filePath = file.getFilePath();
-                    if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
-                        createAdWithImage(adminMessage, filePath);
-                        resetAdminValues();
-                    }
-                    if (getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy)) {
-                        createAdWithImageTest(adminMessage, filePath, chatId);
-                        resetAdminValues();
-                    }
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
+                String filePath = photoSize.getFilePath();
+                if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
+                    createAdWithImage(adminMessage, filePath);
+                    resetAdminValues();
+                }
+                if (getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy)) {
+                    createAdWithImageTest(adminMessage, filePath, chatId);
+                    resetAdminValues();
                 }
             }
         }
