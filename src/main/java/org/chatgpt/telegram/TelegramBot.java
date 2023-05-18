@@ -1,10 +1,10 @@
 package org.chatgpt.telegram;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.chatgpt.api.dream.DreamApi;
 import org.chatgpt.api.gpt.ChatGPTApi;
@@ -286,14 +286,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println(e.getMessage());
         }
 
-        String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath().substring(1);
+        String fileUrl = "https://api.telegram.org/file/bot" + botConfig.getToken() + "/" + file.getFilePath();
 
         System.out.println(fileUrl);
         HttpClient httpClient = HttpClientBuilder.create().build();
-        HttpGet httpGet = new HttpGet(fileUrl);
+        HttpPost httpPost = new HttpPost(fileUrl);
 
         try {
-            HttpResponse response = httpClient.execute(httpGet);
+            HttpResponse response = httpClient.execute(httpPost);
             HttpEntity entity = response.getEntity();
             System.out.println(response);
             System.out.println(response.getEntity());
