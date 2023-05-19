@@ -179,7 +179,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
                         messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
                         messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
-                        if (!isAdmin && user.getUserName().equals(ADMIN)) {
+                        if (user.getUserName().equals(ADMIN)) {
                             isAdmin = true;
                             messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
                             messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
@@ -634,7 +634,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (i > 2 && i < 5) {
                 row2.add(command);
             }
-            if (i > 4) {
+            if (i == 5) {
                 row3.add(command);
             }
             if (i > 5 && isAdmin) {
@@ -649,33 +649,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setResizeKeyboard(true);
         return replyKeyboardMarkup;
     }
-
-//    private ReplyKeyboardMarkup adminAttributes() {
-//        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-//        List<KeyboardRow> keyboard = new ArrayList<>();
-//        KeyboardRow row = new KeyboardRow();
-//        KeyboardRow row2 = new KeyboardRow();
-//        KeyboardRow row3 = new KeyboardRow();
-//        int i = 0;
-//        for (String command : messageHandlers.keySet()) {
-//            if (i > 0 && i < 3) {
-//                row.add(command);
-//            }
-//            if (i > 2 && i < 5) {
-//                row2.add(command);
-//            }
-//            if (i > 4) {
-//                row3.add(command);
-//            }
-//            i++;
-//        }
-//        keyboard.add(row);
-//        keyboard.add(row2);
-//        keyboard.add(row3);
-//        replyKeyboardMarkup.setKeyboard(keyboard);
-//        replyKeyboardMarkup.setResizeKeyboard(true);
-//        return replyKeyboardMarkup;
-//    }
 
     private InlineKeyboardMarkup getOptions(List<String> values) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
