@@ -15,7 +15,6 @@ public class Main {
     public static void main(String[] args) {
         try {
             BotConfig botConfig = new BotConfig(getGeneralProperties(BOT_NAME), getGeneralProperties(BOT_SECRET));
-            ExecutorService executor = Executors.newFixedThreadPool(10);
             TelegramBot telegramBot = new TelegramBot(botConfig);
             BotInitializer botInitializer = new BotInitializer(telegramBot);
             botInitializer.initBot();

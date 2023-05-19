@@ -9,4 +9,5 @@ public interface UserRepository {
     User selectUserByChatId(String chatId);
     void saveUser(User user);
     List<Long> selectAllChatIds();
+    void deleteUser(String chatId);
 }

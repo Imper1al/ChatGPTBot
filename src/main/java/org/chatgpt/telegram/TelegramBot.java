@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.chatgpt.constants.Constants.*;
@@ -59,10 +60,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private String size;
     private List<String> quantityList;
     private List<String> sizeList;
-
     private final BotConfig botConfig;
     private final ChatGPTApi chatGPTApi;
-
     private final UserRepository userRepository;
     private Map<String, Consumer<Long>> messageHandlers;
     private final Map<Long, List<String>> context;
@@ -779,26 +778,76 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void createAdWithImage(String message, String photoPath) {
         List<Long> ids = userRepository.selectAllChatIds();
+        ExecutorService executor = Executors.newFixedThreadPool(50);
         for (Long id : ids) {
-            sendMessageWithImage(message, id, photoPath);
+            Runnable runnable = () -> {
+                if (validateUser(id)) {
+                    sendMessageWithImage(message, id, photoPath);
+                }
+            };
+            executor.execute(runnable);
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
         }
-
+        boolean finished = false;
+        try {
+            finished = executor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        if (finished) {
+            executor.shutdown();
+        }
     }
 
     private void createAdWithText(String message) {
         List<Long> ids = userRepository.selectAllChatIds();
-        for(Long id : ids) {
-            sendMessage(message, id);
+        ExecutorService executor = Executors.newFixedThreadPool(50);
+        for (Long id : ids) {
+            Runnable runnable = () -> {
+                if (validateUser(id)) {
+                    sendMessage(message, id);
+                }
+            };
+            executor.execute(runnable);
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+        boolean finished = false;
+        try {
+            finished = executor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            System.out.println(e.getMessage());
+        }
+        if (finished) {
+            executor.shutdown();
         }
     }
 
+    private boolean validateUser(Long id) {
+        if (userRepository.selectUserByChatId(String.valueOf(id)) == null) {
+            userRepository.deleteUser(String.valueOf(id));
+            return false;
+        }
+        return true;
+    }
+
     private void createAdWithImageTest(String message, String photoPath, Long chatId) {
-        System.out.println(message);
-        sendMessageWithImage(message, chatId, photoPath);
+        if (validateUser(chatId)) {
+            sendMessageWithImage(message, chatId, photoPath);
+        }
     }
 
     private void createAdWithTextTest(String message, Long chatId) {
-        sendMessage(message, chatId);
+        if (validateUser(chatId)) {
+            sendMessage(message, chatId);
+        }
     }
 
     private void resetValues() {

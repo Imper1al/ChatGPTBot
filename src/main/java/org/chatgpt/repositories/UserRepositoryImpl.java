@@ -3,8 +3,10 @@ package org.chatgpt.repositories;
 import org.chatgpt.entities.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 import java.util.List;
@@ -35,6 +37,19 @@ public class UserRepositoryImpl implements UserRepository {
             session.beginTransaction();
             session.saveOrUpdate(user);
             session.getTransaction().commit();
+        }
+    }
+
+    @Override
+    public void deleteUser(String chatId) {
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            CriteriaDelete<User> deleteQuery = criteriaBuilder.createCriteriaDelete(User.class);
+            Root<User> root = deleteQuery.from(User.class);
+            deleteQuery.where(criteriaBuilder.equal(root.get("chatId"), chatId));
+            Transaction transaction = session.beginTransaction();
+            session.createQuery(deleteQuery).executeUpdate();
+            transaction.commit();
         }
     }
 
