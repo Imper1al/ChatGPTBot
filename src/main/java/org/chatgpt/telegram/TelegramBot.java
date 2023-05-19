@@ -50,7 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isCreateAd = false;
     private boolean isCreateAdImage = false;
     private boolean isCreateAdMessage = false;
-    private final boolean tehrab = true;
+    private final boolean tehrab = false;
     private boolean isAdmin = false;
     private String currentAdminStrategy;
     private String quantity;
@@ -212,6 +212,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             isHeight = false;
             isWidth = false;
             resetValues();
+            resetAdminValues();
         }
     }
 
