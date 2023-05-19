@@ -158,7 +158,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 User user = message.getFrom();
                 this.currentUser = addNewUser(user, String.valueOf(chatId));
-                if (tehrab && !user.getUserName().equals(ADMIN)) {
+                if (tehrab && !currentUser.getRole().equals(ADMIN)) {
                     sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE, currentUser.getLang())), message.getChatId(), TEHRAB_IMAGE_URL);
                 }
                 if (!tehrab || (tehrab && currentUser.getRole().equals(ADMIN))) {
