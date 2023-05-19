@@ -12,7 +12,6 @@ import org.chatgpt.repositories.UserRepository;
 import org.chatgpt.repositories.UserRepositoryImpl;
 import org.chatgpt.utils.HibernateUtil;
 import org.chatgpt.utils.PhotoUtils;
-import org.chatgpt.utils.ResourceBundleUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -98,7 +97,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void initAdminStrategyList(String lang) {
+    private void initAdminStrategyList() {
         adminStrategy = new ArrayList<>();
         adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE, currentUser.getLang()));
         adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE, currentUser.getLang()));
@@ -129,7 +128,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         ExecutorService executor = Executors.newFixedThreadPool(1000);
         Runnable task = () -> {
-            // Ваш код обработки запроса от пользователя
             if (update.hasCallbackQuery()) {
                 CallbackQuery callbackQuery = update.getCallbackQuery();
                 long chatId = callbackQuery.getMessage().getChatId();
