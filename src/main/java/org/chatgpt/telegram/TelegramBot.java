@@ -118,6 +118,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .lastName(telegramUser.getLastName())
                     .nickname(telegramUser.getUserName())
                     .chatId(chatId)
+                    .lang(telegramUser.getLanguageCode())
+                    .role("admin")
                     .build();
             user = userRepository.saveUser(newUser);
         }
