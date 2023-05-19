@@ -161,7 +161,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 if (tehrab && !user.getUserName().equals(ADMIN)) {
                     sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE, currentUser.getLang())), message.getChatId(), TEHRAB_IMAGE_URL);
                 }
-                if (!tehrab || (tehrab && user.getUserName().equals(ADMIN))) {
+                if (!tehrab || (tehrab && currentUser.getRole().equals(ADMIN))) {
 
                     System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
                             + ": " + messageText);
