@@ -53,7 +53,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private boolean isCreateAdImage = false;
     private boolean isCreateAdMessage = false;
     private final boolean tehrab = true;
-    private boolean isAdmin = false;
     private String currentAdminStrategy;
     private String quantity;
     private String size;
@@ -119,7 +118,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .nickname(telegramUser.getUserName())
                     .chatId(chatId)
                     .lang(telegramUser.getLanguageCode())
-                    .role("admin")
+                    .role("user")
                     .build();
             user = userRepository.saveUser(newUser);
         }
@@ -134,7 +133,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 CallbackQuery callbackQuery = update.getCallbackQuery();
                 long chatId = callbackQuery.getMessage().getChatId();
                 String query = callbackQuery.getData();
-                if (isAdmin && isCreateAd) {
+                if (currentUser.getRole().equals(ADMIN) && isCreateAd) {
                     currentAdminStrategy = query;
                     if (!isCreateAdMessage) {
                         handleCreateAdCommandMessage(chatId);
@@ -175,8 +174,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         messageHandlers.put(getTranslate(COMMAND_DONATE, currentUser.getLang()), (ch) -> handleSupportCommand(chatId));
                         messageHandlers.put(getTranslate(COMMAND_COOPERATION, currentUser.getLang()), (ch) -> handleCooperationCommand(chatId));
                         messageHandlers.put(getTranslate(COMMAND_REFRESH, currentUser.getLang()), (ch) -> handleResetCommand(chatId));
-                        if (user.getUserName().equals(ADMIN)) {
-                            isAdmin = true;
+                        if (currentUser.getRole().equals(ADMIN)) {
                             initAdminStrategyList();
                             messageHandlers.put(getTranslate(COMMAND_CREATE_AD, currentUser.getLang()), (ch) -> handleCreateAdCommand(chatId));
                             messageHandlers.put(getTranslate(COMMAND_USER_COUNTER, currentUser.getLang()), (ch) -> handleUserCounter(chatId));
@@ -188,7 +186,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                     handleMessagesRequest(chatId, messageText);
                                 } else if (isHandlingImages) {
                                     handleImagesRequest(chatId, messageText);
-                                } else if (isAdmin && isCreateAd) {
+                                } else if (currentUser.getRole().equals(ADMIN) && isCreateAd) {
                                     handleAdminRequest(chatId, message);
                                 }
                             }
@@ -263,7 +261,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleAdminRequest(long chatId, Message message) {
-        if (isAdmin && isCreateAd && isCreateAdMessage) {
+        if (currentUser.getRole().equals(ADMIN) && isCreateAd && isCreateAdMessage) {
             if(message.hasText()) {
                 adminMessage = message.getText();
             }
@@ -634,7 +632,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (i == 5) {
                 row3.add(command);
             }
-            if (i > 5 && isAdmin) {
+            if (i > 5 && currentUser.getRole().equals(ADMIN)) {
                 row3.add(command);
             }
             i++;

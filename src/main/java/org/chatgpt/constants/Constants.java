@@ -12,5 +12,5 @@ public class Constants {
     public final static String TEHRAB_IMAGE_URL = "src/main/resources/images/tehrab.png";
     public final static String START_IMAGE_URL = "src/main/resources/images/start.jpg";
     public final static String COOPERATION_IMAGE_URL = "src/main/resources/images/cooperation.jpg";
-    public final static String ADMIN = "Imper1al";
+    public final static String ADMIN = "admin";
 }
