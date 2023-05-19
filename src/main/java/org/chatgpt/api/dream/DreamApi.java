@@ -110,7 +110,7 @@ public class DreamApi {
                 resultStatus = "failed";
                 System.out.println("Status: failed");
                 System.out.println("Result in cycle: " + result);
-                errors.put(resultStatus, ResourceBundleUtils.getTranslate(TranslationConstants.ERROR_GENERATION));
+                errors.put(resultStatus, ResourceBundleUtils.getTranslate(TranslationConstants.ERROR_GENERATION, "en"));
                 break;
             }
             try {
