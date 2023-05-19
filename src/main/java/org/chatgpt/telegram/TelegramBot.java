@@ -528,11 +528,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
-        if (isAdmin) {
-            sendMessage.setReplyMarkup(adminAttributes());
-        } else {
-            sendMessage.setReplyMarkup(attributes());
-        }
+        sendMessage.setReplyMarkup(attributes());
         sendMessage.setParseMode(ParseMode.MARKDOWN);
         try {
             execute(sendMessage);
@@ -560,11 +556,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(message);
-        if (isAdmin) {
-            sendMessage.setReplyMarkup(adminAttributes());
-        } else {
-            sendMessage.setReplyMarkup(attributes());
-        }
+        sendMessage.setReplyMarkup(attributes());
         sendMessage.setParseMode(ParseMode.MARKDOWN);
         Message execute = new Message();
         try {
@@ -605,11 +597,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             SendPhoto sendPhoto = new SendPhoto();
             sendPhoto.setChatId(chatId);
             sendPhoto.setPhoto(image);
-            if (isAdmin) {
-                sendPhoto.setReplyMarkup(adminAttributes());
-            } else {
-                sendPhoto.setReplyMarkup(attributes());
-            }
+            sendPhoto.setReplyMarkup(attributes());
             sendPhoto.setParseMode(ParseMode.MARKDOWN);
             try {
                 execute(sendPhoto);
@@ -623,11 +611,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
         sendPhoto.setPhoto(image);
-        if (isAdmin) {
-            sendPhoto.setReplyMarkup(adminAttributes());
-        } else {
-            sendPhoto.setReplyMarkup(attributes());
-        }
+        sendPhoto.setReplyMarkup(attributes());
         sendPhoto.setParseMode(ParseMode.MARKDOWN);
         try {
             execute(sendPhoto);
@@ -637,28 +621,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private ReplyKeyboardMarkup attributes() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> keyboard = new ArrayList<>();
-        KeyboardRow row = new KeyboardRow();
-        KeyboardRow row2 = new KeyboardRow();
-        int i = 0;
-        for (String command : messageHandlers.keySet()) {
-            if (i > 0 && i < 3) {
-                row.add(command);
-            }
-            if (i > 2 && i < 6) {
-                row2.add(command);
-            }
-            i++;
-        }
-        keyboard.add(row);
-        keyboard.add(row2);
-        replyKeyboardMarkup.setKeyboard(keyboard);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        return replyKeyboardMarkup;
-    }
-
-    private ReplyKeyboardMarkup adminAttributes() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         List<KeyboardRow> keyboard = new ArrayList<>();
         KeyboardRow row = new KeyboardRow();
@@ -675,6 +637,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (i > 4) {
                 row3.add(command);
             }
+            if (i > 5 && isAdmin) {
+                row3.add(command);
+            }
             i++;
         }
         keyboard.add(row);
@@ -684,6 +649,33 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setResizeKeyboard(true);
         return replyKeyboardMarkup;
     }
+
+//    private ReplyKeyboardMarkup adminAttributes() {
+//        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+//        List<KeyboardRow> keyboard = new ArrayList<>();
+//        KeyboardRow row = new KeyboardRow();
+//        KeyboardRow row2 = new KeyboardRow();
+//        KeyboardRow row3 = new KeyboardRow();
+//        int i = 0;
+//        for (String command : messageHandlers.keySet()) {
+//            if (i > 0 && i < 3) {
+//                row.add(command);
+//            }
+//            if (i > 2 && i < 5) {
+//                row2.add(command);
+//            }
+//            if (i > 4) {
+//                row3.add(command);
+//            }
+//            i++;
+//        }
+//        keyboard.add(row);
+//        keyboard.add(row2);
+//        keyboard.add(row3);
+//        replyKeyboardMarkup.setKeyboard(keyboard);
+//        replyKeyboardMarkup.setResizeKeyboard(true);
+//        return replyKeyboardMarkup;
+//    }
 
     private InlineKeyboardMarkup getOptions(List<String> values) {
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
