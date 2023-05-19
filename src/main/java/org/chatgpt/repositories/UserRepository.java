@@ -7,7 +7,7 @@ import java.util.List;
 public interface UserRepository {
 
     User selectUserByChatId(String chatId);
-    void saveUser(User user);
+    User saveUser(User user);
     List<Long> selectAllChatIds();
     void deleteUser(String chatId);
 }

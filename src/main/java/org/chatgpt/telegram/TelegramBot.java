@@ -75,6 +75,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private int totalPages;
     private String adminMessage;
     private String messageText;
+    private org.chatgpt.entities.User currentUser;
 
     public TelegramBot(BotConfig botConfig) {
         super(botConfig.getToken());
@@ -85,7 +86,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.dreamApi = new DreamApi();
         this.userRepository = new UserRepositoryImpl(HibernateUtil.getSessionFactory());
         initSettingsList();
-        initAdminStrategyList();
     }
 
     private void initSettingsList() {
@@ -98,12 +98,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void initAdminStrategyList() {
+    private void initAdminStrategyList(String lang) {
         adminStrategy = new ArrayList<>();
-        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE));
-        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE));
-        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST));
-        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE_TEST));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE, currentUser.getLang()));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE, currentUser.getLang()));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST, currentUser.getLang()));
+        adminStrategy.add(getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE_TEST, currentUser.getLang()));
     }
 
     @Override
@@ -111,7 +111,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return botConfig.getBotName();
     }
 
-    private void addNewUser(User telegramUser, String chatId) {
+    private org.chatgpt.entities.User addNewUser(User telegramUser, String chatId) {
         org.chatgpt.entities.User user = userRepository.selectUserByChatId(chatId);
         if (user == null) {
             org.chatgpt.entities.User newUser = org.chatgpt.entities.User.builder()
@@ -120,13 +120,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .nickname(telegramUser.getUserName())
                     .chatId(chatId)
                     .build();
-            userRepository.saveUser(newUser);
+            user = userRepository.saveUser(newUser);
         }
+        return user;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        ExecutorService executor = Executors.newFixedThreadPool(50);
+        ExecutorService executor = Executors.newFixedThreadPool(1000);
         Runnable task = () -> {
             // Ваш код обработки запроса от пользователя
             if (update.hasCallbackQuery()) {
@@ -139,7 +140,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         handleCreateAdCommandMessage(chatId);
                     }
                 }
-                if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
+                if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS, currentUser.getLang())) || query.equals(getTranslate(PAGINATION_NEXT, currentUser.getLang())))) {
                     checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
                 }
                 if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
@@ -157,32 +158,28 @@ public class TelegramBot extends TelegramLongPollingBot {
                     messageText = message.getText();
                 }
                 User user = message.getFrom();
-                addNewUser(user, String.valueOf(chatId));
+                this.currentUser = addNewUser(user, String.valueOf(chatId));
                 if (tehrab && !user.getUserName().equals(ADMIN)) {
-                    sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE)), message.getChatId(), TEHRAB_IMAGE_URL);
+                    sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE, currentUser.getLang())), message.getChatId(), TEHRAB_IMAGE_URL);
                 }
                 if (!tehrab || (tehrab && user.getUserName().equals(ADMIN))) {
-
-                    if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
-                        messageHandlers = new LinkedHashMap<>();
-                        ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
-                    }
 
                     System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
                             + ": " + messageText);
 
                     if (messageText != null) {
                         messageHandlers = new LinkedHashMap<>();
-                        messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_START, currentUser.getLang()), (ch) -> handleStartCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_MESSAGE, currentUser.getLang()), (ch) -> handleMessagesMode(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_IMAGE, currentUser.getLang()), (ch) -> handleImagesMode(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_DONATE, currentUser.getLang()), (ch) -> handleSupportCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_COOPERATION, currentUser.getLang()), (ch) -> handleCooperationCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_REFRESH, currentUser.getLang()), (ch) -> handleResetCommand(chatId));
                         if (user.getUserName().equals(ADMIN)) {
                             isAdmin = true;
-                            messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
-                            messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
+                            initAdminStrategyList();
+                            messageHandlers.put(getTranslate(COMMAND_CREATE_AD, currentUser.getLang()), (ch) -> handleCreateAdCommand(chatId));
+                            messageHandlers.put(getTranslate(COMMAND_USER_COUNTER, currentUser.getLang()), (ch) -> handleUserCounter(chatId));
                         }
 
                         Consumer<Long> defaultHandler = (ch) -> {
@@ -227,7 +224,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if(styles != null) {
             strategy.add(DREAM_IMAGE_STRATEGY);
         }
-        sendMessage(getOptions(strategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
+        sendMessage(getOptions(strategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY, currentUser.getLang()), chatId);
     }
 
     private void handleImagesRequest(long chatId, String messageText) {
@@ -253,7 +250,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendImage(dreamApi.generateImages(styles.get(currentStyle), width, height, messageText), chatId);
                     deleteMessage(message, chatId);
                     if (dreamApi.getResultStatus().equals(Constants.DREAM_IMAGE_STATUS_FAILED)) {
-                        sendMessage(getTranslate(ERROR_GENERATION), chatId);
+                        sendMessage(getTranslate(ERROR_GENERATION, currentUser.getLang()), chatId);
                     }
                     resetValues();
                 }catch (Exception e) {
@@ -271,26 +268,26 @@ public class TelegramBot extends TelegramLongPollingBot {
                 adminMessage = message.getText();
             }
             if (!isCreateAdImage) {
-                if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE).equals(currentAdminStrategy)) {
+                if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE, currentUser.getLang()).equals(currentAdminStrategy)) {
                     createAdWithText(adminMessage);
                     resetAdminValues();
                 }
-                if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE_TEST).equals(currentAdminStrategy)) {
+                if (getTranslate(ADMIN_COMMAND_WITHOUT_IMAGE_TEST, currentUser.getLang()).equals(currentAdminStrategy)) {
                     createAdWithTextTest(adminMessage, chatId);
                     resetAdminValues();
                 }
             }
-            if (!isCreateAdImage && (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy) || getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy))) {
+            if (!isCreateAdImage && (getTranslate(ADMIN_COMMAND_WITH_IMAGE, currentUser.getLang()).equals(currentAdminStrategy) || getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST, currentUser.getLang()).equals(currentAdminStrategy))) {
                 handleCreateAdCommandImage(chatId);
             }
             if (isCreateAdImage && message.hasDocument()) {
                 Document document = message.getDocument();
                 String filePath = downloadPhoto(document.getFileId());
-                if (getTranslate(ADMIN_COMMAND_WITH_IMAGE).equals(currentAdminStrategy)) {
+                if (getTranslate(ADMIN_COMMAND_WITH_IMAGE, currentUser.getLang()).equals(currentAdminStrategy)) {
                     createAdWithImage(adminMessage, filePath);
                     resetAdminValues();
                 }
-                if (getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST).equals(currentAdminStrategy)) {
+                if (getTranslate(ADMIN_COMMAND_WITH_IMAGE_TEST, currentUser.getLang()).equals(currentAdminStrategy)) {
                     createAdWithImageTest(adminMessage, filePath, chatId);
                     resetAdminValues();
                 }
@@ -335,13 +332,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (result >= 1 && result <= 8000) {
                         height = messageText;
                         isHeight = false;
-                        sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                        sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION, currentUser.getLang()), chatId);
                         isDescription = true;
                     } else {
-                        sendMessage(getTranslate(ERROR_HEIGHT), chatId);
+                        sendMessage(getTranslate(ERROR_HEIGHT, currentUser.getLang()), chatId);
                     }
                 } catch (NumberFormatException e) {
-                    sendMessage(getTranslate(ERROR_HEIGHT), chatId);
+                    sendMessage(getTranslate(ERROR_HEIGHT, currentUser.getLang()), chatId);
                 }
             }
             if (isWidth) {
@@ -351,12 +348,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         width = messageText;
                         isWidth = false;
                         isHeight = true;
-                        sendMessage(getTranslate(MESSAGE_IMAGE_HEIGHT_WRITE), chatId);
+                        sendMessage(getTranslate(MESSAGE_IMAGE_HEIGHT_WRITE, currentUser.getLang()), chatId);
                     } else {
-                        sendMessage(getTranslate(ERROR_WIDTH), chatId);
+                        sendMessage(getTranslate(ERROR_WIDTH, currentUser.getLang()), chatId);
                     }
                 } catch (NumberFormatException e) {
-                    sendMessage(getTranslate(ERROR_WIDTH), chatId);
+                    sendMessage(getTranslate(ERROR_WIDTH, currentUser.getLang()), chatId);
                 }
             }
         }
@@ -368,15 +365,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                 currentStyle = query;
             }
             if (currentStyle == null && !isPagination) {
-                message.setText(getTranslate(MESSAGE_IMAGE_STYLE_WRITE));
+                message.setText(getTranslate(MESSAGE_IMAGE_STYLE_WRITE, currentUser.getLang()));
                 checkPaginationCallback(query, chatId, message.getMessageId());
                 isPagination = true;
             }
             if (currentStyle != null && width == null) {
                 isPagination = false;
                 currentPage = 1;
-                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT) + currentStyle, chatId);
-                sendMessage(getTranslate(MESSAGE_IMAGE_WIDTH_WRITE), chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_STYLE_RESULT, currentUser.getLang()) + currentStyle, chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_WIDTH_WRITE, currentUser.getLang()), chatId);
                 isWidth = true;
             }
         }
@@ -386,14 +383,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (isHandlingGPTImages) {
             if (quantityList.contains(query)) {
                 quantity = query;
-                sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE), chatId);
+                sendMessage(getOptions(sizeList), getTranslate(MESSAGE_IMAGE_QUANTITY_WRITE, currentUser.getLang()), chatId);
             }
             if (sizeList.contains(query)) {
                 size = query;
-                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION), chatId);
+                sendMessage(getTranslate(MESSAGE_IMAGE_DESCRIPTION, currentUser.getLang()), chatId);
             }
             if (quantity == null && size == null) {
-                sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE), chatId);
+                sendMessage(getOptions(quantityList), getTranslate(MESSAGE_IMAGE_SIZE_WRITE, currentUser.getLang()), chatId);
             }
         }
     }
@@ -405,20 +402,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.println("Result: " + generateMessageAnswerFromChatGPT);
         deleteMessage(message, chatId);
         if (errorHandler(generateMessageAnswerFromChatGPT)) {
-            sendMessage(getTranslate(ERROR_TIMEOUT), chatId);
+            sendMessage(getTranslate(ERROR_TIMEOUT, currentUser.getLang()), chatId);
         } else {
             sendMessage(generateMessageAnswerFromChatGPT, chatId);
         }
     }
 
     private void handleSupportCommand(long chatId) {
-        sendMessage(getTranslate(MESSAGE_DONATE_BEFORE) + getTranslate(MESSAGE_DONATE_LINKS) + getTranslate(MESSAGE_DONATE_AFTER), chatId);
+        sendMessage(getTranslate(MESSAGE_DONATE_BEFORE, currentUser.getLang()) + getTranslate(MESSAGE_DONATE_LINKS, currentUser.getLang()) + getTranslate(MESSAGE_DONATE_AFTER, currentUser.getLang()), chatId);
     }
 
     private void handleResetCommand(long chatId) {
         resetValues();
         resetAdminValues();
-        sendMessage(getTranslate(MESSAGE_REFRESH), chatId);
+        sendMessage(getTranslate(MESSAGE_REFRESH, currentUser.getLang()), chatId);
         isHandlingDreamImages = false;
         isHandlingGPTImages = false;
         isWidth = false;
@@ -434,11 +431,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleCooperationCommand(long chatId) {
-        sendMessageWithImage(getTranslate(MESSAGE_COOPERATION), chatId, COOPERATION_IMAGE_URL);
+        sendMessageWithImage(getTranslate(MESSAGE_COOPERATION, currentUser.getLang()), chatId, COOPERATION_IMAGE_URL);
     }
 
     private void handleStartCommand(long chatId) {
-        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_START)), chatId, START_IMAGE_URL);
+        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_START, currentUser.getLang())), chatId, START_IMAGE_URL);
         this.isHandlingImages = false;
         this.isHandlingMessages = true;
     }
@@ -447,7 +444,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         isCreateAd = true;
         isHandlingMessages = false;
         isHandlingImages = false;
-        sendMessage(getAdminOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY), chatId);
+        sendMessage(getAdminOptions(adminStrategy), getTranslate(MESSAGE_IMAGE_SELECT_STRATEGY, currentUser.getLang()), chatId);
     }
 
     private void handleUserCounter(long chatId) {
@@ -458,14 +455,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleCreateAdCommandMessage(Long chatId) {
         if (isCreateAd) {
             isCreateAdMessage = true;
-            sendMessage(getTranslate(ADMIN_WRITE_TEXT), chatId);
+            sendMessage(getTranslate(ADMIN_WRITE_TEXT, currentUser.getLang()), chatId);
         }
     }
 
     private void handleCreateAdCommandImage(Long chatId) {
         if (isCreateAd) {
             isCreateAdImage = true;
-            sendMessage(getTranslate(ADMIN_WRITE_IMAGE), chatId);
+            sendMessage(getTranslate(ADMIN_WRITE_IMAGE, currentUser.getLang()), chatId);
         }
     }
 
@@ -473,7 +470,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         isHandlingMessages = true;
         isHandlingImages = false;
         isCreateAdMessage = false;
-        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_MESSAGE)), chatId, MESSAGES_IMAGE_URL);
+        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_MESSAGE, currentUser.getLang())), chatId, MESSAGES_IMAGE_URL);
         resetValues();
     }
 
@@ -483,7 +480,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         isHandlingImages = true;
         isHandlingGPTImages = false;
         isHandlingDreamImages = false;
-        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_IMAGE)), chatId, IMAGES_IMAGE_URL);
+        sendMessageWithImage(addStarsToFirstLine(getTranslate(MESSAGE_IMAGE, currentUser.getLang())), chatId, IMAGES_IMAGE_URL);
         resetValues();
         handleImageStrategy(chatId);
     }
@@ -705,14 +702,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         List<InlineKeyboardButton> paginationRow = new ArrayList<>();
         if (currentPage > 1) {
             InlineKeyboardButton previousButton = new InlineKeyboardButton();
-            previousButton.setText(getTranslate(PAGINATION_PREVIOUS));
-            previousButton.setCallbackData(getTranslate(PAGINATION_PREVIOUS));
+            previousButton.setText(getTranslate(PAGINATION_PREVIOUS, currentUser.getLang()));
+            previousButton.setCallbackData(getTranslate(PAGINATION_PREVIOUS, currentUser.getLang()));
             paginationRow.add(previousButton);
         }
         if (currentPage < totalPages) {
             InlineKeyboardButton nextButton = new InlineKeyboardButton();
-            nextButton.setText(getTranslate(PAGINATION_NEXT));
-            nextButton.setCallbackData(getTranslate(PAGINATION_NEXT));
+            nextButton.setText(getTranslate(PAGINATION_NEXT, currentUser.getLang()));
+            nextButton.setCallbackData(getTranslate(PAGINATION_NEXT, currentUser.getLang()));
             paginationRow.add(nextButton);
         }
         rows.add(paginationRow);
@@ -723,10 +720,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void checkPaginationCallback(String paginationData, long chatId, int messageId) {
         totalPages = (int) Math.ceil((double) styles.keySet().size() / 9);
-        if (paginationData.equals(getTranslate(PAGINATION_PREVIOUS))) {
+        if (paginationData.equals(getTranslate(PAGINATION_PREVIOUS, currentUser.getLang()))) {
             currentPage -= 1;
         }
-        if (paginationData.equals(getTranslate(PAGINATION_NEXT))) {
+        if (paginationData.equals(getTranslate(PAGINATION_NEXT, currentUser.getLang()))) {
             currentPage += 1;
         }
         InlineKeyboardMarkup markup = getStyleOptions(styles.keySet());
@@ -743,7 +740,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void createAdWithImage(String message, String photoPath) {
         List<Long> ids = userRepository.selectAllChatIds();
-        ExecutorService executor = Executors.newFixedThreadPool(50);
+        ExecutorService executor = Executors.newFixedThreadPool(100);
         for (Long id : ids) {
             Runnable runnable = () -> {
                 if (validateUser(id)) {
@@ -770,7 +767,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void createAdWithText(String message) {
         List<Long> ids = userRepository.selectAllChatIds();
-        ExecutorService executor = Executors.newFixedThreadPool(50);
+        ExecutorService executor = Executors.newFixedThreadPool(100);
         for (Long id : ids) {
             Runnable runnable = () -> {
                 if (validateUser(id)) {

@@ -32,11 +32,12 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public void saveUser(User user) {
+    public User saveUser(User user) {
         try (Session session = sessionFactory.openSession()) {
             session.beginTransaction();
             session.saveOrUpdate(user);
             session.getTransaction().commit();
+            return selectUserByChatId(user.getChatId());
         }
     }
 

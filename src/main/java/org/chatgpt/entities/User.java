@@ -26,4 +26,8 @@ public class User {
     private String nickname;
     @Column(name = "chat_id")
     private String chatId;
+    @Column(name = "lang")
+    private String lang;
+    @Column(name = "role")
+    private String role;
 }
