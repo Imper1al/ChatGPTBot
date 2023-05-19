@@ -30,6 +30,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import static org.chatgpt.constants.Constants.*;
@@ -125,81 +127,85 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasCallbackQuery()) {
-            CallbackQuery callbackQuery = update.getCallbackQuery();
-            long chatId = callbackQuery.getMessage().getChatId();
-            String query = callbackQuery.getData();
-            if (isAdmin && isCreateAd) {
-                currentAdminStrategy = query;
-                if (!isCreateAdMessage) {
-                    handleCreateAdCommandMessage(chatId);
+        ExecutorService executor = Executors.newFixedThreadPool(50);
+        Runnable task = () -> {
+            // Ваш код обработки запроса от пользователя
+            if (update.hasCallbackQuery()) {
+                CallbackQuery callbackQuery = update.getCallbackQuery();
+                long chatId = callbackQuery.getMessage().getChatId();
+                String query = callbackQuery.getData();
+                if (isAdmin && isCreateAd) {
+                    currentAdminStrategy = query;
+                    if (!isCreateAdMessage) {
+                        handleCreateAdCommandMessage(chatId);
+                    }
                 }
-            }
-            if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
-                checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
-            }
-            if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
-                isHandlingDreamImages = true;
-                handleDreamImages(query, chatId, callbackQuery.getMessage());
-            }
-            if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
-                isHandlingGPTImages = true;
-                handleGPTImages(query, chatId);
-            }
-        } else if (update.hasMessage()) {
-            Message message = update.getMessage();
-            long chatId = message.getChatId();
-            if(message.hasText()) {
-                messageText = message.getText();
-            }
-            User user = message.getFrom();
-            addNewUser(user, String.valueOf(chatId));
-            if (tehrab && !user.getUserName().equals(ADMIN)) {
-                sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE)), message.getChatId(), TEHRAB_IMAGE_URL);
-            }
-            if (!tehrab || (tehrab && user.getUserName().equals(ADMIN))) {
-
-                if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
-                    this.messageHandlers = new LinkedHashMap<>();
-                    ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
+                if (isHandlingDreamImages && isPagination && (query.equals(getTranslate(PAGINATION_PREVIOUS)) || query.equals(getTranslate(PAGINATION_NEXT)))) {
+                    checkPaginationCallback(query, chatId, callbackQuery.getMessage().getMessageId());
                 }
+                if ((query.equals(DREAM_IMAGE_STRATEGY) || isHandlingDreamImages) && !isHandlingGPTImages) {
+                    isHandlingDreamImages = true;
+                    handleDreamImages(query, chatId, callbackQuery.getMessage());
+                }
+                if ((query.equals(GPT_IMAGE_STRATEGY) || isHandlingGPTImages) && !isHandlingDreamImages) {
+                    isHandlingGPTImages = true;
+                    handleGPTImages(query, chatId);
+                }
+            } else if (update.hasMessage()) {
+                Message message = update.getMessage();
+                long chatId = message.getChatId();
+                if (message.hasText()) {
+                    messageText = message.getText();
+                }
+                User user = message.getFrom();
+                addNewUser(user, String.valueOf(chatId));
+                if (tehrab && !user.getUserName().equals(ADMIN)) {
+                    sendMessageWithImage(addStarsToFirstLine(getTranslate(TEHWORKS_MESSAGE)), message.getChatId(), TEHRAB_IMAGE_URL);
+                }
+                if (!tehrab || (tehrab && user.getUserName().equals(ADMIN))) {
 
-                System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
-                        + ": " + messageText);
-
-                if (messageText != null) {
-                    messageHandlers = new LinkedHashMap<>();
-                    messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
-                    messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
-                    if (user.getUserName().equals(ADMIN)) {
-                        isAdmin = true;
-                        messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
-                        messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
+                    if (!user.getLanguageCode().equals(ResourceBundleUtils.getLanguageCode())) {
+                        messageHandlers = new LinkedHashMap<>();
+                        ResourceBundleUtils.setLanguageCode(user.getLanguageCode());
                     }
 
-                    Consumer<Long> defaultHandler = (ch) -> {
-                        if (!messageHandlers.containsKey(messageText)) {
-                            if (isHandlingMessages) {
-                                handleMessagesRequest(chatId, messageText);
-                            }
-                            else if (isHandlingImages) {
-                                handleImagesRequest(chatId, messageText);
-                            }
-                            else if(isAdmin && isCreateAd) {
-                                handleAdminRequest(chatId, message);
-                            }
-                        }
-                    };
+                    System.out.println("Message from: " + user.getFirstName() + " (" + user.getUserName() + "(" + user.getLanguageCode() + ")" + ") " + user.getLastName()
+                            + ": " + messageText);
 
-                    messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
+                    if (messageText != null) {
+                        messageHandlers = new LinkedHashMap<>();
+                        messageHandlers.put(getTranslate(COMMAND_START), (ch) -> handleStartCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_MESSAGE), (ch) -> handleMessagesMode(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_IMAGE), (ch) -> handleImagesMode(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_DONATE), (ch) -> handleSupportCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_COOPERATION), (ch) -> handleCooperationCommand(chatId));
+                        messageHandlers.put(getTranslate(COMMAND_REFRESH), (ch) -> handleResetCommand(chatId));
+                        if (user.getUserName().equals(ADMIN)) {
+                            isAdmin = true;
+                            messageHandlers.put(getTranslate(COMMAND_CREATE_AD), (ch) -> handleCreateAdCommand(chatId));
+                            messageHandlers.put(getTranslate(COMMAND_USER_COUNTER), (ch) -> handleUserCounter(chatId));
+                        }
+
+                        Consumer<Long> defaultHandler = (ch) -> {
+                            if (!messageHandlers.containsKey(messageText)) {
+                                if (isHandlingMessages) {
+                                    handleMessagesRequest(chatId, messageText);
+                                } else if (isHandlingImages) {
+                                    handleImagesRequest(chatId, messageText);
+                                } else if (isAdmin && isCreateAd) {
+                                    handleAdminRequest(chatId, message);
+                                }
+                            }
+                        };
+
+                        messageHandlers.getOrDefault(messageText, defaultHandler).accept(chatId);
+                    }
                 }
             }
-        }
-        }
+        };
+        executor.execute(task);
+        executor.shutdown();
+    }
 
     private void errorHandler(long chatId) {
         if(!dreamApi.getErrors().isEmpty()) {
